@@ -1,0 +1,5 @@
+-1.0 gauss(o=0,_w=0.5,_c=8)
+-1.0 gauss(o=3,_w=2,_c=8)
+1.0  num_heavy_atoms
+1.0  num_tors_add
+1.0  num_hydrophobic_atom

@@ -48,6 +48,7 @@ def smiles_to_hot(smiles, max_len, padding, char_indices, nchars):
 
 def smiles_to_hot_filter(smiles, char_indices):
     filtered_smiles = []
+
     for i, smile in enumerate(smiles):
         for t, char in enumerate(smile):
             try:

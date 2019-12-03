@@ -1,4 +1,4 @@
-'''
+"""
 A GRU layer capable of teacher forcing at train time, and sampling from a softmax at test time.
 
 # Example of use:
@@ -60,7 +60,7 @@ self.implementation ==2 : gpu
 self.implementation ==1 : mem
 self.implementation ==0 : cpu
 
-'''
+"""
 from keras.layers.recurrent import GRU
 from keras import backend as K
 from keras.engine import InputSpec

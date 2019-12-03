@@ -1,4 +1,4 @@
-'''
+"""
 sampled_rnn - based on rnn method in tensorflow_backend.py in keras
 
 Main difference is in how to handle dimensions of states.
@@ -6,7 +6,7 @@ Main difference is in how to handle dimensions of states.
 
 # think carefully about the distribution of the random sampled variables...
 
-'''
+"""
 
 
 def sampled_rnn(step_function, inputs, initial_states, units, random_seed,

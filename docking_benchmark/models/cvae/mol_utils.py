@@ -68,7 +68,7 @@ def smiles_to_hot_filter(smiles, char_indices, max_len, with_valid_indices=False
                 break
         else:
             if with_valid_indices:
-                indices.append(indices)
+                indices.append(i)
 
             filtered_smiles.append(smi)
 

@@ -79,62 +79,47 @@ class ZincGrammarModel(object):
             self.vae = self._model.MoleculeVAE()
             self.vae.load(self._productions, pretrained_model, max_length=self.MAX_LEN, latent_rep_size=latent_rep_size)
 
-    def to_one_hots(self, smiles):
+    def to_one_hots(self, smiles, with_valid_indices=False):
         if type(smiles) is str:
             smiles = [smiles]
 
-        indices = []
+        productions_for_smiles = []
+        parsable_smiles_indices = []
 
-        for smi in smiles:
+        for i, smi in enumerate(smiles):
             try:
                 tokens = self._tokenize(smi)
                 parse_tree = self._parser.parse(tokens).__next__()
                 production_seq = parse_tree.productions()
-                indices.append(np.array([self._prod_map[prod] for prod in production_seq], dtype=int))
+                productions_for_smiles.append(np.array([self._prod_map[prod] for prod in production_seq], dtype=int))
+                parsable_smiles_indices.append(i)
             except (StopIteration, ValueError):
-                logger.error(f'Failed conversion to one-hot vector for {smi}')
+                logger.error(f'Failed parsing for {smi}')
 
-        one_hot = np.zeros((len(indices), self.MAX_LEN, self._n_chars), dtype=np.float32)
+        one_hots = np.zeros((len(productions_for_smiles), self.MAX_LEN, self._n_chars), dtype=np.float32)
         valid = []
 
         try:
-            for i in range(len(indices)):
-                num_productions = len(indices[i])
+            for i, productions in enumerate(productions_for_smiles):
+                num_productions = len(productions)
                 if num_productions > 277:
                     continue
-                one_hot[i][np.arange(num_productions), indices[i]] = 1.
-                one_hot[i][np.arange(num_productions, self.MAX_LEN), -1] = 1.
+                one_hots[i][np.arange(num_productions), productions] = 1.
+                one_hots[i][np.arange(num_productions, self.MAX_LEN), -1] = 1.
                 valid.append(i)
         except IndexError:
-            print(one_hot[276])
-            print(smiles[276])
+            logger.error(f'Failed conversion to one hot vector')
 
-        return one_hot[valid]
+        if with_valid_indices:
+            return one_hots[valid], [parsable_smiles_indices[i] for i in valid]
+
+        return one_hots[valid]
 
     def encode(self, smiles):
         """ Encode a list of smiles strings into the latent space """
         assert type(smiles) == list
 
-        tokens = list(map(self._tokenize, smiles))
-        parse_trees = [self._parser.parse(t).__next__() for t in tokens]
-        productions_seq = [tree.productions() for tree in parse_trees]
-        indices = [np.array([self._prod_map[prod] for prod in entry], dtype=int) for entry in productions_seq]
-        one_hot = np.zeros((len(indices), self.MAX_LEN, self._n_chars), dtype=np.float32)
-
-        valid = []
-        try:
-            for i in range(len(indices)):
-                num_productions = len(indices[i])
-                if num_productions > 277:
-                    continue
-                one_hot[i][np.arange(num_productions), indices[i]] = 1.
-                one_hot[i][np.arange(num_productions, self.MAX_LEN), -1] = 1.
-                valid.append(i)
-        except IndexError:
-            print(one_hot[276])
-            print(smiles[276])
-
-        return self.vae.encoder.predict(one_hot[valid])
+        return self.vae.encoder.predict(self.to_one_hots(smiles))
 
     def _sample_using_masks(self, unmasked):
         """ Samples a one-hot vector, masking at each timestep.

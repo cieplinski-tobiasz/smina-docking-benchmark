@@ -21,7 +21,6 @@ class GVAEGradientGenerator:
         gvae = MoleculeVAE()
         gvae.load(zinc_grammar.gram.split('\n'), pretrained_path, latent_rep_size=latent, max_length=max_len)
 
-        self.dataset = dataset
         self.latent = latent
         self.gvae = ZincGrammarModel(gvae)
         self.fine_tune_epochs = fine_tune_epochs
@@ -31,6 +30,7 @@ class GVAEGradientGenerator:
         self.descent_iterations = descent_iterations
         self.descent_lr = descent_lr
         self.max_len = max_len
+        self.dataset = self.get_filtered_dataset(dataset)
 
         if mode == 'minimize':
             self.descent_lr *= -1
@@ -90,3 +90,10 @@ class GVAEGradientGenerator:
             valid_samples = valid_samples[:number_molecules]
 
         return valid_samples
+
+    def get_filtered_dataset(self, dataset):
+        smiles, scores = dataset
+
+        _, valid_indices = self.gvae.to_one_hots(smiles, with_valid_indices=True)
+
+        return [smiles[i] for i in valid_indices], scores[valid_indices]

@@ -45,6 +45,11 @@ class CVAEGradientGenerator:
 
     def _fine_tune(self):
         x_dataset, _ = self.dataset
+        x_dataset = mol_utils.smiles_to_hot_filter(
+            x_dataset,
+            self.cvae.char_indices,
+            self.cvae.params['MAX_LEN']
+        )
 
         one_hots = mol_utils.smiles_to_hot(
             x_dataset,

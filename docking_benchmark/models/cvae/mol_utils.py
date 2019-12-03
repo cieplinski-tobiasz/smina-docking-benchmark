@@ -53,10 +53,11 @@ def smiles_to_hot(smiles, max_len, padding, char_to_index, n_chars):
     return X
 
 
-def smiles_to_hot_filter(smiles, char_indices, max_len):
+def smiles_to_hot_filter(smiles, char_indices, max_len, with_valid_indices=False):
     filtered_smiles = []
+    indices = []
 
-    for smi in smiles:
+    for i, smi in enumerate(smiles):
         if len(smi) > max_len:
             continue
 
@@ -66,7 +67,13 @@ def smiles_to_hot_filter(smiles, char_indices, max_len):
             except KeyError:
                 break
         else:
+            if with_valid_indices:
+                indices.append(indices)
+
             filtered_smiles.append(smi)
+
+    if with_valid_indices:
+        return filtered_smiles, indices
 
     return filtered_smiles
 

@@ -25,7 +25,7 @@ class CVAEGradientGenerator:
         self.fit_epochs = fit_epochs
         self.descent_iterations = descent_iterations
         self.descent_lr = descent_lr
-        self.dataset = dataset
+        self.dataset = self.get_filtered_dataset(dataset)
 
         if mode == 'minimize':
             self.descent_lr *= -1
@@ -45,17 +45,12 @@ class CVAEGradientGenerator:
 
     def _fine_tune(self):
         x_dataset, _ = self.dataset
-        x_dataset = mol_utils.smiles_to_hot_filter(
-            x_dataset,
-            self.cvae.char_indices,
-            self.cvae.params['MAX_LEN']
-        )
 
         one_hots = mol_utils.smiles_to_hot(
             x_dataset,
             self.cvae.params['MAX_LEN'],
             self.cvae.params['PADDING'],
-            self.cvae.char_indices,
+            self.cvae.char_to_index,
             self.cvae.params['NCHARS']
         )
 
@@ -115,3 +110,15 @@ class CVAEGradientGenerator:
             valid_samples = valid_samples[:number_molecules]
 
         return valid_samples
+
+    def get_filtered_dataset(self, dataset):
+        smiles, scores = dataset
+
+        filtered_smiles, valid_indices = mol_utils.smiles_to_hot_filter(
+            smiles,
+            self.cvae.char_to_index,
+            self.cvae.params['MAX_LEN'],
+            with_valid_indices=True
+        )
+
+        return filtered_smiles, scores[valid_indices]

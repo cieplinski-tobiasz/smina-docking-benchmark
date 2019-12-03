@@ -1,18 +1,22 @@
 import numpy as np
 from rdkit.Chem import AllChem as Chem
 
+from docking_benchmark.utils.scripting import setup_and_get_logger
 
-def pad_smile(smiles, max_len, padding='right'):
-    if len(smiles) >= max_len:
-        return smiles
+logger = setup_and_get_logger(name=__name__)
+
+
+def pad_smile(string, max_len, padding='right'):
+    if len(string) >= max_len:
+        return string
 
     if padding == 'right':
-        return smiles.ljust(max_len)
+        return string.ljust(max_len)
 
     if padding == 'left':
-        return smiles.rjust(max_len)
+        return string.rjust(max_len)
 
-    return smiles
+    return string
 
 
 def filter_valid_length(strings, max_len):
@@ -30,33 +34,40 @@ def filter_valid_smiles_return_invalid(strings, max_len):
     return new_smiles, filter_list
 
 
-def smiles_to_hot(smiles, max_len, padding, char_indices, nchars):
-    smiles = [pad_smile(i, max_len, padding)
-              for i in smiles if pad_smile(i, max_len, padding)]
+def smiles_to_hot(smiles, max_len, padding, char_to_index, n_chars):
+    smiles = [
+        pad_smile(i, max_len, padding)
+        for i in smiles if pad_smile(i, max_len, padding)
+    ]
 
-    X = np.zeros((len(smiles), max_len, nchars), dtype=np.float32)
+    X = np.zeros((len(smiles), max_len, n_chars), dtype=np.float32)
 
-    for i, smile in enumerate(smiles):
-        for t, char in enumerate(smile):
+    for i, smi in enumerate(smiles):
+        for t, char in enumerate(smi):
             try:
-                X[i, t, char_indices[char]] = 1
+                X[i, t, char_to_index[char]] = 1
             except KeyError as e:
-                print("ERROR: Check chars file. Bad SMILES:", smile)
+                logger.error('Check chars file. Bad SMILES: ' + smi)
                 raise e
+
     return X
 
 
-def smiles_to_hot_filter(smiles, char_indices):
+def smiles_to_hot_filter(smiles, char_indices, max_len):
     filtered_smiles = []
 
-    for i, smile in enumerate(smiles):
-        for t, char in enumerate(smile):
+    for smi in smiles:
+        if len(smi) > max_len:
+            continue
+
+        for char in smi:
             try:
                 char_indices[char]
             except KeyError:
                 break
         else:
-            filtered_smiles.append(smile)
+            filtered_smiles.append(smi)
+
     return filtered_smiles
 
 
@@ -104,10 +115,6 @@ def matched_ring(s):
 
 def fast_verify(s):
     return matched_ring(s) and balanced_parentheses(s)
-
-
-def get_molecule_smi(mol_obj):
-    return Chem.MolToSmiles(mol_obj)
 
 
 def canon_smiles(smi):

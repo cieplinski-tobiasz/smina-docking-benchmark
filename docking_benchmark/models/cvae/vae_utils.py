@@ -27,7 +27,7 @@ logger = setup_and_get_logger(name=__name__)
 
 def kl_loss(truth_dummy, x_mean_log_var_output):
     x_mean, x_log_var = tf.split(x_mean_log_var_output, 2, axis=1)
-    logger.info('x_mean shape in kl_loss: ' + x_mean.get_shape())
+    logger.info('x_mean shape in kl_loss: {}'.format(x_mean.get_shape()))
     return - 0.5 * K.mean(1 + x_log_var - K.square(x_mean) - K.exp(x_log_var), axis=-1)
 
 

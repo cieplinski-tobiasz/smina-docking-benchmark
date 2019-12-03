@@ -2,16 +2,17 @@ import numpy as np
 from rdkit.Chem import AllChem as Chem
 
 
-def pad_smile(string, max_len, padding='right'):
-    if len(string) >= max_len:
-        return string
+def pad_smile(smiles, max_len, padding='right'):
+    if len(smiles) >= max_len:
+        return smiles
 
     if padding == 'right':
-        return string + " " * (max_len - len(string))
-    elif padding == 'left':
-        return " " * (max_len - len(string)) + string
+        return smiles.ljust(max_len)
 
-    return string
+    if padding == 'left':
+        return smiles.rjust(max_len)
+
+    return smiles
 
 
 def filter_valid_length(strings, max_len):

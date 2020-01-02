@@ -1,7 +1,13 @@
 from typing import Optional
 
+import numpy as np
 from rdkit import Chem
+from rdkit import DataStructs
 from rdkit.Chem import AllChem
+
+from docking_benchmark.utils.scripting import setup_and_get_logger
+
+logger = setup_and_get_logger(name=__name__)
 
 
 def embed_rdkit_molecule(molecule: Chem.Mol, seed: int, silent: bool = True) -> Optional[Chem.Mol]:
@@ -108,3 +114,70 @@ def canonicalize(smiles: str, include_stereocenters=True) -> Optional[str]:
         return Chem.MolToSmiles(mol, isomericSmiles=include_stereocenters)
     else:
         return None
+
+
+def calculate_pairwise_similarities(smiles_list1, smiles_list2) -> np.array:
+    """
+    Computes the pairwise ECFP4 tanimoto similarity of the two smiles containers.
+
+    Returns:
+        Pairwise similarity matrix as np.array
+    """
+    if len(smiles_list1) > 10000 or len(smiles_list2) > 10000:
+        logger.warning(f'Calculating similarity between large sets of '
+                       f'SMILES strings ({len(smiles_list1)} x {len(smiles_list2)})')
+
+    mols1 = get_mols(smiles_list1)
+    fps1 = get_fingerprints(mols1)
+
+    mols2 = get_mols(smiles_list2)
+    fps2 = get_fingerprints(mols2)
+
+    similarities = []
+
+    for fp1 in fps1:
+        sims = DataStructs.BulkTanimotoSimilarity(fp1, fps2)
+
+        similarities.append(sims)
+
+    similarities = np.array(similarities)
+
+    return similarities
+
+
+def get_fingerprints_from_smileslist(smiles_list, length: int = 4096):
+    """
+    Converts the provided smiles into ECFP4 bitvectors.
+
+    Args:
+        smiles_list: list of SMILES strings
+        length: length of the bitvector
+
+    Returns: ECFP4 bitvectors.
+
+    """
+    return get_fingerprints(get_mols(smiles_list), length=length)
+
+
+def get_fingerprints(mols, radius=2, length=4096):
+    """
+    Converts molecules to ECFP bitvectors.
+
+    Args:
+        mols: RDKit molecules
+        radius: ECFP fingerprint radius
+        length: number of bits
+
+    Returns: a list of fingerprints
+    """
+    return [AllChem.GetMorganFingerprintAsBitVect(m, radius, length) for m in mols]
+
+
+def get_mols(smiles_list):
+    for i in smiles_list:
+        try:
+            mol = Chem.MolFromSmiles(i)
+            if mol is not None:
+                yield mol
+        except Exception as e:
+            logger.warning(e)

@@ -15,14 +15,16 @@ class CVAEGradientGenerator:
     def __init__(self, pretrained_path, dataset,
                  latent=196, batch_size=256,
                  fine_tune_epochs=5, fine_tune_test_size=0.1,
-                 fit_epochs=30, descent_iterations=50, descent_lr=0.01,
+                 mlp_fit_epochs=50, mlp_test_size=0.1,
+                 descent_iterations=50, descent_lr=0.05,
                  mode='minimize'):
         self.latent = latent
         self.fine_tune_epochs = fine_tune_epochs
         self.fine_tune_test_size = fine_tune_test_size
         self.cvae = vae_utils.VAEUtils(directory=pretrained_path)
         self.batch_size = batch_size
-        self.fit_epochs = fit_epochs
+        self.mlp_fit_epochs = mlp_fit_epochs
+        self.mlp_test_size = mlp_test_size
         self.descent_iterations = descent_iterations
         self.descent_lr = descent_lr
         smiles, scores = dataset
@@ -89,7 +91,9 @@ class CVAEGradientGenerator:
         self._fine_tune()
 
         predicted_docking_function = MLPPredictedDockingScore(
-            self.dataset, input_dim=self.latent, to_latent_fn=self._smiles_to_latent_fn()
+            self.dataset, input_dim=self.latent,
+            epochs=self.mlp_fit_epochs, test_fraction=self.mlp_test_size,
+            to_latent_fn=self._smiles_to_latent_fn(),
         )
 
         valid_samples = []
@@ -97,6 +101,9 @@ class CVAEGradientGenerator:
 
         while len(valid_samples) < number_molecules:
             latents = np.random.normal(size=(self.batch_size, self.latent))
+
+            before = [predicted_docking_function.latent_score(latents[i].reshape(1, -1))
+                      for i in range(self.batch_size)]
 
             for _ in range(self.descent_iterations):
                 latents += predicted_docking_function.gradient(latents) * self.descent_lr
@@ -107,6 +114,7 @@ class CVAEGradientGenerator:
             for i, smi in enumerate(smiles):
                 if smi is not None and is_valid(smi):
                     latent_score = predicted_docking_function.latent_score(latents[i].reshape(1, -1))
+                    logger.info(f'Optimized from {before[i]} to {latent_score}')
                     valid_samples.append((smi, latent_score))
 
             total_sampled += self.batch_size

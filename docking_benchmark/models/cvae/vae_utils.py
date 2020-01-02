@@ -1,8 +1,6 @@
 import os
-import random
 
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 import yaml
 from keras import backend as K
@@ -31,19 +29,17 @@ def kl_loss(truth_dummy, x_mean_log_var_output):
     return - 0.5 * K.mean(1 + x_log_var - K.square(x_mean) - K.exp(x_log_var), axis=-1)
 
 
-class VAEUtils(object):
+class VAEUtils:
     def __init__(self,
                  exp_file='exp.json',
                  encoder_file=None,
                  decoder_file=None,
                  directory=None,
-                 lr=2e-4,
-                 estimate_estandard=True):
+                 lr=2e-4):
         # files
         if directory is not None:
             curdir = os.getcwd()
             os.chdir(os.path.join(curdir, directory))
-            # exp_file = os.path.join(directory, exp_file)
 
         # load parameters
         self.params = hyperparameters.load_params(exp_file, False)
@@ -96,47 +92,6 @@ class VAEUtils(object):
         if self.params['do_prop_pred']:
             self.property_predictor = load_property_predictor(self.params)
 
-        self.data = None
-
-        if estimate_estandard:
-            # Load data without normalization as dataframe
-            df = pd.read_csv(self.params['data_file'])
-            df.iloc[:, 0] = df.iloc[:, 0].str.strip()
-            df = df[df.iloc[:, 0].str.len() <= self.params['MAX_LEN']]
-            self.smiles = df.iloc[:, 0].tolist()
-            if df.shape[1] > 1:
-                self.data = df.iloc[:, 1:]
-
-            self.estimate_estandarization()
-
-        if directory is not None:
-            os.chdir(curdir)
-
-    def estimate_estandarization(self):
-        logger.info('Standarization: estimating mu and std values...')
-
-        # sample Z space
-        smiles = self.random_molecules(size=50000)
-        batch = 2500
-        latents = np.zeros((len(smiles), self.params['hidden_dim']))
-
-        for chunk in self.chunks(list(range(len(smiles))), batch):
-            sub_smiles = [smiles[i] for i in chunk]
-            one_hot = self.smiles_to_hot(sub_smiles)
-            latents[chunk, :] = self.encode(one_hot, False)
-
-        self.mu = np.mean(latents, axis=0)
-        self.std = np.std(latents, axis=0)
-        self.Z = self.standardize_z(latents)
-
-        logger.info('Standardization finished')
-
-    def standardize_z(self, z):
-        return (z - self.mu) / self.std
-
-    def unstandardize_z(self, z):
-        return (z * self.std) + self.mu
-
     def perturb_z(self, z, noise_norm, constant_norm=False):
         if noise_norm > 0.0:
             noise_vec = np.random.normal(0, 1, size=z.shape)
@@ -150,28 +105,19 @@ class VAEUtils(object):
         else:
             return z
 
-    def enc_dec_functions(self, standardized=True):
-        logger.info('Using standardized functions? {}'.format(standardized))
-
+    def enc_dec_functions(self):
         if not self.params['do_tgru']:
-            def decode(z, standardize=standardized):
-                if standardize:
-                    z = self.unstandardize_z(z)
-
+            def decode(z):
                 return self.dec.predict(z)
         else:
-            def decode(z, standardize=standardized):
+            def decode(z):
                 fake_shape = (z.shape[0], self.params['MAX_LEN'], self.params['NCHARS'])
                 fake_in = np.zeros(fake_shape)
 
-                if standardize:
-                    z = self.unstandardize_z(z)
-
                 return self.dec.predict([z, fake_in])
 
-        def encode(one_hot, standardize=standardized):
-            latent = self.enc.predict(one_hot)[0]
-            return self.standardize_z(latent) if standardize else latent
+        def encode(one_hot):
+            return self.enc.predict(one_hot)[0]
 
         return encode, decode
 
@@ -205,12 +151,6 @@ class VAEUtils(object):
             smiles = [s.strip() for s in smiles]
 
         return smiles
-
-    def random_molecules(self, size=None):
-        if size is None:
-            return self.smiles
-        else:
-            return random.sample(self.smiles, size)
 
     @staticmethod
     def chunks(l, n):

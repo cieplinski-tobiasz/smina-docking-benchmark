@@ -41,6 +41,9 @@ class CVAEGradientGenerator:
         elif mode != 'maximize':
             raise ValueError(f'Unknown mode {mode}')
 
+        self.mlp = None
+        self.fine_tuned = False
+
     def _smiles_to_latent_fn(self):
         def smiles_to_latent(smiles):
             nonlocal self
@@ -53,6 +56,9 @@ class CVAEGradientGenerator:
         return smiles_to_latent
 
     def _fine_tune(self):
+        if self.fine_tuned:
+            return
+
         x_dataset, _ = self.dataset
 
         one_hots = mol_utils.smiles_to_hot(
@@ -87,14 +93,39 @@ class CVAEGradientGenerator:
             validation_data=[test, model_test_targets]
         )
 
-    def generate_optimized_molecules(self, number_molecules: int):
-        self._fine_tune()
+    def _train_mlp(self):
+        if self.mlp is None:
+            self.mlp = MLPPredictedDockingScore(
+                self.dataset, input_dim=self.latent,
+                epochs=self.mlp_fit_epochs, test_fraction=self.mlp_test_size,
+                to_latent_fn=self._smiles_to_latent_fn(),
+            )
 
-        predicted_docking_function = MLPPredictedDockingScore(
-            self.dataset, input_dim=self.latent,
-            epochs=self.mlp_fit_epochs, test_fraction=self.mlp_test_size,
-            to_latent_fn=self._smiles_to_latent_fn(),
-        )
+    def random_gauss_rmse(self, smiles_docking_score_fn, test_size=1):
+        rmse_samples = []
+
+        while len(rmse_samples) < test_size:
+            latents = np.random.normal(size=(self.batch_size, self.latent))
+
+            smiles = [canonicalize(smi) for smi in
+                      self.cvae.hot_to_smiles(self.cvae.decode(latents), strip=True, numpy=True)]
+
+            for i, smi in enumerate(smiles):
+                if smi is not None and is_valid(smi):
+                    rmse_samples.append((smi, self.mlp.latent_score(latents[i].reshape(1, -1))))
+
+        rmse_samples = [(smi, ls, smiles_docking_score_fn(smi)) for smi, ls in rmse_samples]
+        rmse_samples = rmse_samples[:test_size]
+
+        return (sum((ls - ds) ** 2 for _, ls, ds in rmse_samples) / test_size) ** (1 / 2)
+
+    def generate_optimized_molecules(self, number_molecules: int, smiles_docking_score_fn=None, rmse_test: int = 100):
+        self._fine_tune()
+        self._train_mlp()
+
+        if smiles_docking_score_fn is not None and rmse_test is not None:
+            gauss_rmse = self.random_gauss_rmse(smiles_docking_score_fn, rmse_test)
+            logger.info(f'Gauss RMSE: {gauss_rmse:.2f}')
 
         valid_samples = []
         total_sampled = 0
@@ -102,18 +133,18 @@ class CVAEGradientGenerator:
         while len(valid_samples) < number_molecules:
             latents = np.random.normal(size=(self.batch_size, self.latent))
 
-            before = [predicted_docking_function.latent_score(latents[i].reshape(1, -1))
+            before = [self.mlp.latent_score(latents[i].reshape(1, -1))
                       for i in range(self.batch_size)]
 
             for _ in range(self.descent_iterations):
-                latents += predicted_docking_function.gradient(latents) * self.descent_lr
+                latents += self.mlp.gradient(latents) * self.descent_lr
 
             smiles = [canonicalize(smi) for smi in
                       self.cvae.hot_to_smiles(self.cvae.decode(latents), strip=True, numpy=True)]
 
             for i, smi in enumerate(smiles):
                 if smi is not None and is_valid(smi):
-                    latent_score = predicted_docking_function.latent_score(latents[i].reshape(1, -1))
+                    latent_score = self.mlp.latent_score(latents[i].reshape(1, -1))
                     logger.info(f'Optimized from {before[i]} to {latent_score}')
                     valid_samples.append((smi, latent_score))
 

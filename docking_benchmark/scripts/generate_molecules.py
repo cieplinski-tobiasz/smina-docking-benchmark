@@ -6,6 +6,7 @@ import pandas as pd
 import docking_benchmark.data.proteins as proteins
 from docking_benchmark.models.models import ALL_MODELS
 from docking_benchmark.utils import scripting
+from docking_benchmark.docking.smina.docking import dock_smiles
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +49,14 @@ def _parse_args():
 
 if __name__ == '__main__':
     args = _parse_args()
-    dataset = proteins.get_proteins()[args.protein].datasets[args.dataset]
+    protein = proteins.get_proteins()[args.protein]
+    dataset = protein.datasets[args.dataset]
     model_cls = ALL_MODELS[args.model]['cls']
     generator = model_cls(args.model_path, dataset, mode=args.mode)
-    molecules = generator.generate_optimized_molecules(args.n_molecules)
+    molecules = generator.generate_optimized_molecules(
+        args.n_molecules,
+        smiles_docking_score_fn=lambda smi: dock_smiles(smi, protein.path, protein.pocket_center)
+    )
 
     df = pd.DataFrame(molecules, columns=['SMILES', 'DOCKING_SCORE'])
     df.to_csv(args.output, index=False)

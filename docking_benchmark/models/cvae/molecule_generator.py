@@ -7,6 +7,7 @@ import docking_benchmark.models.cvae.mol_utils as mol_utils
 import docking_benchmark.models.cvae.vae_utils as vae_utils
 from docking_benchmark.docking.predicted_docking_functions import MLPPredictedDockingScore
 from docking_benchmark.utils.chemistry import is_valid, canonicalize
+from docking_benchmark.utils.results import OptimizedMoleculesBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class CVAEGradientGenerator:
         return smiles_to_latent
 
     def _fine_tune(self):
-        if self.fine_tuned:
+        if self.fine_tune_epochs <= 0 or self.fine_tuned:
             return
 
         x_dataset, _ = self.dataset
@@ -101,10 +102,11 @@ class CVAEGradientGenerator:
                 to_latent_fn=self._smiles_to_latent_fn(),
             )
 
-    def random_gauss_rmse(self, smiles_docking_score_fn, test_size=1):
-        rmse_samples = []
+    def random_gauss(self, smiles_docking_score_fn, size=1):
+        results_builder = OptimizedMoleculesBuilder()
 
-        while len(rmse_samples) < test_size:
+        while results_builder.size < size:
+            logger.info(f'Random sampled {results_builder.size} / {size}')
             latents = np.random.normal(size=(self.batch_size, self.latent))
 
             smiles = [canonicalize(smi) for smi in
@@ -112,25 +114,40 @@ class CVAEGradientGenerator:
 
             for i, smi in enumerate(smiles):
                 if smi is not None and is_valid(smi):
-                    rmse_samples.append((smi, self.mlp.latent_score(latents[i].reshape(1, -1))))
+                    docking_score = smiles_docking_score_fn(smi)
+                    results_builder.append_molecule(
+                        smi,
+                        docking_score,
+                        latent_vector=latents[i],
+                        predicted_score=self.mlp.latent_score(latents[i].reshape(1, -1))
+                    )
 
-        rmse_samples = [(smi, ls, smiles_docking_score_fn(smi)) for smi, ls in rmse_samples]
-        rmse_samples = rmse_samples[:test_size]
+                    if results_builder.size >= size:
+                        logger.info('Random sampling finished')
+                        break
 
-        return (sum((ls - ds) ** 2 for _, ls, ds in rmse_samples) / test_size) ** (1 / 2)
+        return results_builder.build()
 
-    def generate_optimized_molecules(self, number_molecules: int, smiles_docking_score_fn=None, rmse_test: int = 100):
+    def generate_optimized_molecules(self,
+                                     number_molecules: int,
+                                     with_random_samples: bool = False,
+                                     smiles_docking_score_fn=None,
+                                     random_samples: int = 100):
         self._fine_tune()
         self._train_mlp()
 
-        if smiles_docking_score_fn is not None and rmse_test is not None:
-            gauss_rmse = self.random_gauss_rmse(smiles_docking_score_fn, rmse_test)
-            logger.info(f'Gauss RMSE: {gauss_rmse:.2f}')
+        gauss_samples = None
 
-        valid_samples = []
-        total_sampled = 0
+        if with_random_samples:
+            assert smiles_docking_score_fn is not None
+            assert random_samples is not None
+            logger.info('Random sampling')
+            gauss_samples = self.random_gauss(smiles_docking_score_fn, random_samples)
 
-        while len(valid_samples) < number_molecules:
+        results_builder = OptimizedMoleculesBuilder()
+
+        while results_builder.size < number_molecules:
+            logger.info(f'Generated {results_builder.size} / {number_molecules}')
             latents = np.random.normal(size=(self.batch_size, self.latent))
 
             before = [self.mlp.latent_score(latents[i].reshape(1, -1))
@@ -146,13 +163,16 @@ class CVAEGradientGenerator:
                 if smi is not None and is_valid(smi):
                     latent_score = self.mlp.latent_score(latents[i].reshape(1, -1))
                     logger.info(f'Optimized from {before[i]} to {latent_score}')
-                    valid_samples.append((smi, latent_score))
+                    results_builder.append_molecule(
+                        smi,
+                        latent_score,
+                        latent_vector=latents[i]
+                    )
 
-            total_sampled += self.batch_size
+                    if results_builder.size >= number_molecules:
+                        logger.info('Generating finished')
+                        break
 
-            logger.info(f'Sampled {len(valid_samples) / number_molecules}')
+            results_builder.increment_sample_count(self.batch_size)
 
-        if len(valid_samples) > number_molecules:
-            valid_samples = valid_samples[:number_molecules]
-
-        return valid_samples
+        return results_builder.build(), gauss_samples

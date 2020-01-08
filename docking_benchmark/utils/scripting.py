@@ -14,3 +14,14 @@ def set_keras_cores(num_cores):
     config = tf.ConfigProto(intra_op_parallelism_threads=num_cores, inter_op_parallelism_threads=num_cores)
     session = tf.Session(config=config)
     keras.backend.set_session(session)
+
+
+def disable_rdkit_logging():
+    """
+    Disables RDKit whiny logging.
+    """
+    import rdkit.rdBase as rkrb
+    import rdkit.RDLogger as rkl
+    logger = rkl.logger()
+    logger.setLevel(rkl.ERROR)
+    rkrb.DisableLog('rdApp.error')

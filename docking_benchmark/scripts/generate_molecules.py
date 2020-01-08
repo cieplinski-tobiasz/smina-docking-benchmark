@@ -4,9 +4,9 @@ import logging
 import pandas as pd
 
 import docking_benchmark.data.proteins as proteins
+from docking_benchmark.docking.smina.docking import dock_smiles
 from docking_benchmark.models.models import ALL_MODELS
 from docking_benchmark.utils import scripting
-from docking_benchmark.docking.smina.docking import dock_smiles
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ def _parse_args():
     args = parser.parse_args()
     scripting.setup_and_get_logger(args.debug)
     scripting.set_keras_cores(args.n_cpu)
+    scripting.disable_rdkit_logging()
 
     if args.model not in ALL_MODELS:
         logger.error(f'No model named {args.model}')
@@ -53,10 +54,15 @@ if __name__ == '__main__':
     dataset = protein.datasets[args.dataset]
     model_cls = ALL_MODELS[args.model]['cls']
     generator = model_cls(args.model_path, dataset, mode=args.mode)
-    molecules = generator.generate_optimized_molecules(
+    molecules, random_gauss = generator.generate_optimized_molecules(
         args.n_molecules,
-        smiles_docking_score_fn=lambda smi: dock_smiles(smi, protein.path, protein.pocket_center)
+        smiles_docking_score_fn=lambda smi: dock_smiles(smi, protein.path, protein.pocket_center, ),
+        random_samples=100,
+        with_random_samples=True
     )
 
-    df = pd.DataFrame(molecules, columns=['SMILES', 'DOCKING_SCORE'])
+    molecules.save(args.out + '.om')
+    random_gauss.save(args.out + '.gauss.om')
+
+    df = pd.DataFrame(list(zip(molecules.smiles, molecules.scores)), columns=['SMILES', 'DOCKING_SCORE'])
     df.to_csv(args.output, index=False)

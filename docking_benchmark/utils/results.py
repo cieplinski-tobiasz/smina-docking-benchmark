@@ -19,10 +19,10 @@ class OptimizedMolecules:
         self._calculate_metrics()
 
     def _calculate_metrics(self):
-        if self.predicted_scores:
+        if self.predicted_scores is not None:
             self.metrics['rmse'] = pow(((self.scores - self.predicted_scores) ** 2).mean(axis=None), 1 / 2)
 
-        if self._total_samples:
+        if self._total_samples is not None:
             self.metrics['validity'] = len(self.smiles) / self._total_samples
 
     def metric(self, name):

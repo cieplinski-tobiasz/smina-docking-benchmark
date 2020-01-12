@@ -90,7 +90,7 @@ class GVAEGradientGenerator:
                             latent_vector=latents[i],
                             predicted_score=self.mlp.latent_score(latents[i].reshape(1, -1))
                         )
-                    except ValueError as e:
+                    except (ValueError, RuntimeError):
                         logger.error('Docking failed')
 
                     if results_builder.size >= size:

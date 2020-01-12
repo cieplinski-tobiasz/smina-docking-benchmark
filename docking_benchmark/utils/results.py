@@ -20,7 +20,7 @@ class OptimizedMolecules:
 
     def _calculate_metrics(self):
         if self.predicted_scores is not None:
-            self.metrics['rmse'] = pow(((self.scores - self.predicted_scores) ** 2).mean(axis=None), 1 / 2)
+            self.metrics['rmse'] = ((self.scores - self.predicted_scores) ** 2).mean(axis=None) ** (1 / 2)
 
         if self._total_samples is not None:
             self.metrics['validity'] = len(self.smiles) / self._total_samples
@@ -98,6 +98,6 @@ class OptimizedMoleculesBuilder:
             self._molecules,
             np.array(self._scores),
             latent_vectors=latents,
-            predicted_scores=np.array(self._predicted_scores),
+            predicted_scores=np.array(self._predicted_scores) if self._predicted_scores else None,
             total_samples=self._total_samples
         )

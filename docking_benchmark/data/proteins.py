@@ -2,6 +2,7 @@ import json
 import os
 from typing import List
 
+import numpy as np
 import pandas as pd
 
 import docking_benchmark.data.directories
@@ -13,14 +14,38 @@ PROTEIN_FORMATS = (
 
 
 class Datasets:
+    """Container for datasets for a protein.
+
+    Provides methods for accessing datasets for a protein.
+    The datasets are loaded lazily.
+
+    Attributes:
+        protein (Protein): Protein that the datasets are for.
+    """
     _DEFAULT_SMILES_COLUMN = 'SMILES'
     _DEFAULT_SCORE_COLUMN = 'DOCKING_SCORE'
 
     def __init__(self, protein):
-        self.protein = protein
-        self._datasets = protein.metadata.get('datasets', list())
+        """Creates dataset container for given protein.
 
-    def __getitem__(self, dataset_name):
+        Args:
+            protein (Protein): Protein that datasets are loaded for.
+        """
+        self.protein = protein
+        self._datasets = protein.metadata.get('datasets', dict())
+
+    def __getitem__(self, dataset_name: str):
+        """Loads the dataset with given name to memory.
+
+        Args:
+            dataset_name (str): Name of the dataset to load.
+
+        Returns:
+            tuple[list[str], np.array]: SMILES and score tuple.
+
+        Raises:
+            KeyError: If dataset with given name does not exist.
+        """
         if dataset_name not in self._datasets:
             raise KeyError(f'No dataset named {dataset_name} for protein {self.protein.name}')
 
@@ -30,9 +55,49 @@ class Datasets:
         score_column = dataset.get('score_column', self._DEFAULT_SCORE_COLUMN)
         return csv[smiles_column].tolist(), csv[score_column].to_numpy()
 
-    @property
-    def default(self):
-        return self['default']
+    def with_linear_combination_score(self, dataset_name, **component_weights):
+        """Loads the dataset with score as a linear combination of given components.
+
+        The method loads the dataset and creates score
+        according to the components and the corresponding weights passed.
+
+        For example:
+        `linear_combination('test', A=1.0, B=2.0)`
+        will create a dataset with SMILES from `test` dataset
+        and with the score equal to 1.0 * A + 2.0 * B
+        for each SMILES.
+
+        Args:
+            dataset_name (str): Name of the dataset to load.
+            **component_weights (float): Component weights used in linear combination.
+
+        Returns:
+            tuple[list[str], np.array]: SMILES and score tuple.
+
+        Raises:
+            ValueError: If dataset with dataset_name does not exist,
+                        no component_weights are passed
+                        or component with given name is not present
+                        in the dataset.
+        """
+        dataset = self._datasets[dataset_name]
+        csv = pd.read_csv(os.path.join(self.protein.directory, dataset['path']))
+
+        if len(component_weights) == 0:
+            raise ValueError('No components\' weights passed')
+
+        for component, _ in component_weights.items():
+            if component not in csv.columns:
+                raise ValueError('No component named ' + component + ' in ' + dataset_name + ' dataset')
+
+        combination = np.zeros(csv.shape[0])
+
+        for component, weight in component_weights.items():
+            combination += csv[component].to_numpy() * weight
+
+        smiles_column = dataset.get('smiles_column', self._DEFAULT_SMILES_COLUMN)
+
+        return csv[smiles_column], combination
 
 
 class Protein:

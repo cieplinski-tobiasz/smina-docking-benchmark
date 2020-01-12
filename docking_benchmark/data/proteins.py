@@ -17,7 +17,7 @@ class Datasets:
 
     def __init__(self, protein):
         self.protein = protein
-        self._datasets = protein.metadata['datasets']
+        self._datasets = protein.metadata.get('datasets', list())
 
     def __getitem__(self, dataset_name):
         if dataset_name not in self._datasets:
@@ -40,42 +40,37 @@ class Protein:
     def __init__(self, name, directory):
         self.name = name
         self.directory = directory
-        self._path = None
-        self._metadata = None
+        self.path = self._load_protein_file_path()
+        self.metadata = self._load_metadata()
         self.datasets = Datasets(self)
 
-    @property
-    def path(self):
-        if self._path is None:
-            protein_files = [entry for entry in os.listdir(self.directory)
-                             if any(entry.endswith(fmt) for fmt in PROTEIN_FORMATS)]
+    def _load_protein_file_path(self):
+        protein_files = [entry for entry in os.listdir(self.directory)
+                         if any(entry.endswith(fmt) for fmt in PROTEIN_FORMATS)]
 
-            if len(protein_files) != 1:
-                raise RuntimeError('Ambiguous files inside the protein directory')
+        if len(protein_files) != 1:
+            msg_start = 'No protein files' if len(protein_files) == 0 else 'More than one protein file'
+            raise ValueError(msg_start + ' inside ' + self.name + ' protein data directory')
 
-            self._path = os.path.join(self.directory, protein_files[0])
+        return os.path.join(self.directory, protein_files[0])
 
-        return self._path
+    def _load_metadata(self):
+        with open(os.path.join(self.directory, self.__class__._METADATA_FILENAME)) as metadata_file:
+            metadata = json.load(metadata_file)
 
-    @property
-    def metadata(self) -> dict:
-        if self._metadata is None:
-            with open(os.path.join(self.directory, self.__class__._METADATA_FILENAME)) as metadata_file:
-                self._metadata = json.load(metadata_file)
+            if 'pocket_center' not in metadata:
+                raise ValueError('Protein ' + self.name + ' metadata must contain pocket_center key')
 
-        return self._metadata
+            return metadata
 
     @property
     def pocket_center(self):
         return self.metadata['pocket_center']
 
-    @property
-    def default_dataset(self):
-        return self.datasets.default
-
 
 def get_proteins():
-    return {protein_dir.lower(): Protein(protein_dir.lower(),
-                                         os.path.join(docking_benchmark.data.directories.PROTEINS,
-                                                      protein_dir.lower()))
-            for protein_dir in os.listdir(docking_benchmark.data.directories.PROTEINS)}
+    return {
+        protein_dir.lower(): Protein(
+            protein_dir.lower(),
+            os.path.join(docking_benchmark.data.directories.PROTEINS, protein_dir.lower())
+        ) for protein_dir in os.listdir(docking_benchmark.data.directories.PROTEINS)}

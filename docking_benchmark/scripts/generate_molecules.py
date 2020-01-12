@@ -61,8 +61,8 @@ if __name__ == '__main__':
         with_random_samples=True
     )
 
-    molecules.save(args.out + '.om')
-    random_gauss.save(args.out + '.gauss.om')
+    molecules.save(args.output + '.om')
+    random_gauss.save(args.output + '.gauss.om')
 
     df = pd.DataFrame(list(zip(molecules.smiles, molecules.scores)), columns=['SMILES', 'DOCKING_SCORE'])
     df.to_csv(args.output, index=False)

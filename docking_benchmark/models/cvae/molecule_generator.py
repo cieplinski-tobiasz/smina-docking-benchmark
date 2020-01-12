@@ -114,13 +114,16 @@ class CVAEGradientGenerator:
 
             for i, smi in enumerate(smiles):
                 if smi is not None and is_valid(smi):
-                    docking_score = smiles_docking_score_fn(smi)
-                    results_builder.append_molecule(
-                        smi,
-                        docking_score,
-                        latent_vector=latents[i],
-                        predicted_score=self.mlp.latent_score(latents[i].reshape(1, -1))
-                    )
+                    try:
+                        docking_score = smiles_docking_score_fn(smi)
+                        results_builder.append_molecule(
+                            smi,
+                            docking_score,
+                            latent_vector=latents[i],
+                            predicted_score=self.mlp.latent_score(latents[i].reshape(1, -1))
+                        )
+                    except ValueError as e:
+                        logger.error('Docking failed')
 
                     if results_builder.size >= size:
                         logger.info('Random sampling finished')
@@ -166,7 +169,8 @@ class CVAEGradientGenerator:
                     results_builder.append_molecule(
                         smi,
                         latent_score,
-                        latent_vector=latents[i]
+                        latent_vector=latents[i],
+                        predicted_score=self.mlp.latent_score(latents[i].reshape(1, -1))
                     )
 
                     if results_builder.size >= number_molecules:

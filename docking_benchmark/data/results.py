@@ -1,3 +1,5 @@
+import pickle
+
 import pandas as pd
 
 
@@ -21,6 +23,15 @@ class OptimizedMolecules:
 
         squared_error = (series1 - series2) ** 2
         return squared_error.mean() ** (1 / 2)
+
+    def save(self, path):
+        with open(path, 'wb') as file:
+            pickle.dump(self, file)
+
+    @staticmethod
+    def load(path):
+        with open(path, 'rb') as file:
+            return pickle.load(file)
 
     class Builder:
         def __init__(self):

@@ -33,6 +33,9 @@ class OptimizedMolecules:
         with open(path, 'rb') as file:
             return pickle.load(file)
 
+    def to_csv(self, path, index_label='SMILES', **pd_kwargs):
+        self.molecules.to_csv(path, index_label=index_label, **pd_kwargs)
+
     class Builder:
         def __init__(self):
             self.total_samples = 0

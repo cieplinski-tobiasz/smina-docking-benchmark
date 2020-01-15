@@ -1,3 +1,5 @@
+import textwrap
+
 import pandas as pd
 import pytest
 
@@ -129,3 +131,19 @@ def test_rmse_with_error_happy_path():
     result = uut.rmse('col1', 'col2')
 
     assert result == 1
+
+
+def test_to_csv_happy_path(tmp_path):
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0, col2=1)
+    builder.append('H', col1=2.5, col2=1)
+    uut = builder.build()
+    file = tmp_path / 'tmp_file.csv'
+    expected = textwrap.dedent('''\
+    SMILES,col1,col2
+    C,0.0,1
+    H,2.5,1
+    ''')
+    uut.to_csv(file)
+
+    assert file.read_text() == expected

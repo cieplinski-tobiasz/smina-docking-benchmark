@@ -4,11 +4,11 @@ import tempfile
 import numpy as np
 
 import docking_benchmark.models.gvae.zinc_grammar as zinc_grammar
+from docking_benchmark.data.results import OptimizedMolecules
 from docking_benchmark.docking.predicted_docking_functions import MLPPredictedDockingScore
 from docking_benchmark.models.gvae.model_zinc import MoleculeVAE
 from docking_benchmark.models.gvae.molecule_vae import ZincGrammarModel
 from docking_benchmark.utils.chemistry import is_valid, canonicalize
-from docking_benchmark.utils.results import OptimizedMoleculesBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class GVAEGradientGenerator:
             )
 
     def random_gauss(self, smiles_docking_score_fn, size):
-        results_builder = OptimizedMoleculesBuilder()
+        results_builder = OptimizedMolecules.Builder()
 
         while results_builder.size < size:
             logger.info(f'Random sampled {results_builder.size} / {size}')
@@ -84,9 +84,9 @@ class GVAEGradientGenerator:
                 if smi is not None and is_valid(smi):
                     try:
                         docking_score = smiles_docking_score_fn(smi)
-                        results_builder.append_molecule(
+                        results_builder.append(
                             smi,
-                            docking_score,
+                            docking_score=docking_score,
                             latent_vector=latents[i],
                             predicted_score=self.mlp.latent_score(latents[i].reshape(1, -1))
                         )
@@ -115,7 +115,7 @@ class GVAEGradientGenerator:
             logger.info('Random sampling')
             gauss_samples = self.random_gauss(smiles_docking_score_fn, random_samples)
 
-        results_builder = OptimizedMoleculesBuilder()
+        results_builder = OptimizedMolecules.Builder()
 
         while results_builder.size < number_molecules:
             logger.info(f'Generated {results_builder.size} / {number_molecules}')
@@ -133,18 +133,17 @@ class GVAEGradientGenerator:
                 if smi is not None and is_valid(smi):
                     latent_score = self.mlp.latent_score(latents[i].reshape(1, -1))
                     logger.info(f'Optimized from {before[i]} to {latent_score}')
-                    results_builder.append_molecule(
+                    results_builder.append(
                         smi,
-                        latent_score,
                         latent_vector=latents[i],
-                        predicted_score=self.mlp.latent_score(latents[i].reshape(1, -1))
+                        predicted_score=latent_score
                     )
 
                     if results_builder.size >= number_molecules:
                         logger.info(f'Generating finished')
-                        break
+                    break
 
-            results_builder.increment_sample_count(self.batch_size)
+            results_builder.total_samples += self.batch_size
 
         return results_builder.build(), gauss_samples
 

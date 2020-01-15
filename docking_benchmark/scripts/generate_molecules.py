@@ -1,8 +1,6 @@
 import argparse
 import logging
 
-import pandas as pd
-
 import docking_benchmark.data.proteins as proteins
 from docking_benchmark.docking.smina.docking import dock_smiles
 from docking_benchmark.models.models import ALL_MODELS
@@ -54,15 +52,13 @@ if __name__ == '__main__':
     dataset = protein.datasets[args.dataset]
     model_cls = ALL_MODELS[args.model]['cls']
     generator = model_cls(args.model_path, dataset, mode=args.mode)
-    molecules, random_gauss = generator.generate_optimized_molecules(
+    optimized, random_gauss = generator.generate_optimized_molecules(
         args.n_molecules,
         smiles_docking_score_fn=lambda smi: dock_smiles(smi, protein.path, protein.pocket_center, ),
         random_samples=100,
         with_random_samples=True
     )
 
-    molecules.save(args.output + '.om')
+    optimized.save(args.output + '.om')
     random_gauss.save(args.output + '.gauss.om')
-
-    df = pd.DataFrame(list(zip(molecules.smiles, molecules.scores)), columns=['SMILES', 'DOCKING_SCORE'])
-    df.to_csv(args.output, index=False)
+    optimized.to_csv(args.output, columns=['predicted_score'])

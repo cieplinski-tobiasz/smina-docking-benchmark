@@ -127,7 +127,11 @@ class GVAEGradientGenerator:
             for _ in range(self.descent_iterations):
                 latents += self.mlp.gradient(latents) * self.descent_lr
 
-            smiles = [canonicalize(smi) for smi in self.gvae.decode(latents)]
+            try:
+                smiles = [canonicalize(smi) for smi in self.gvae.decode(latents)]
+            except (RuntimeError, ValueError):
+                logger.error('Decoding failed')
+                continue
 
             for i, smi in enumerate(smiles):
                 if smi is not None and is_valid(smi):

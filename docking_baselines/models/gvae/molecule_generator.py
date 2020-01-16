@@ -7,7 +7,7 @@ import docking_baselines.models.gvae.zinc_grammar as zinc_grammar
 from docking_baselines.models.gvae.model_zinc import MoleculeVAE
 from docking_baselines.models.gvae.molecule_vae import ZincGrammarModel
 from docking_benchmark.data.results import OptimizedMolecules
-from docking_benchmark.docking.predicted_docking_functions import MLPPredictedDockingScore
+from docking_baselines.models.predicted_docking_functions import MLPPredictedDockingScore
 from docking_benchmark.utils.chemistry import is_valid, canonicalize
 
 logger = logging.getLogger(__name__)

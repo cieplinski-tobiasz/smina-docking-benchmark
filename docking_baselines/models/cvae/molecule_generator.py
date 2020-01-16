@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 import docking_baselines.models.cvae.mol_utils as mol_utils
 import docking_baselines.models.cvae.vae_utils as vae_utils
 from docking_benchmark.data.results import OptimizedMolecules
-from docking_benchmark.docking.predicted_docking_functions import MLPPredictedDockingScore
+from docking_baselines.models.predicted_docking_functions import MLPPredictedDockingScore
 from docking_benchmark.utils.chemistry import is_valid, canonicalize
 
 logger = logging.getLogger(__name__)

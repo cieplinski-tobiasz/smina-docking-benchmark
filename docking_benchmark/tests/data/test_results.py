@@ -147,3 +147,114 @@ def test_to_csv_happy_path(tmp_path):
     uut.to_csv(file)
 
     assert file.read_text() == expected
+
+
+def test_first_n_raises_with_negative_n():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+
+    with pytest.raises(ValueError):
+        uut.get_first_n(-1, by_column='col1')
+
+
+def test_first_n_raises_with_zero_n():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+
+    with pytest.raises(ValueError):
+        uut.get_first_n(0, by_column='col1')
+
+
+def test_first_n_raises_with_non_existing_column():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+
+    with pytest.raises(ValueError):
+        uut.get_first_n(1, by_column='no_such_column')
+
+
+def test_first_n_happy_path_ascending():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    builder.append('H', col1=1)
+    uut = builder.build()
+    expected = pd.DataFrame.from_dict({'C': {'col1': 0}}, orient='index')
+
+    result = uut.get_first_n(1, by_column='col1', sort_ascending=True)
+
+    assert result.equals(expected)
+
+
+def test_first_n_happy_path_descending():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    builder.append('H', col1=1)
+    uut = builder.build()
+    expected = pd.DataFrame.from_dict({'H': {'col1': 1}}, orient='index')
+
+    result = uut.get_first_n(1, by_column='col1', sort_ascending=False)
+
+    assert result.equals(expected)
+
+
+def test_first_fraction_raises_with_negative_fraction():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+
+    with pytest.raises(ValueError):
+        uut.get_first_fraction(-1, by_column='col1')
+
+
+def test_top_fraction_raises_with_zero_fraction():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+
+    with pytest.raises(ValueError):
+        uut.get_first_fraction(0, by_column='col1')
+
+
+def test_top_fraction_raises_with_fraction_greater_than_one():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+
+    with pytest.raises(ValueError):
+        uut.get_first_fraction(1.2, by_column='col1')
+
+
+def test_top_fraction_raises_with_non_existing_column():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+
+    with pytest.raises(ValueError):
+        uut.get_first_fraction(1, by_column='no_such_column')
+
+
+def test_top_fraction_happy_path_ascending():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    builder.append('H', col1=1)
+    uut = builder.build()
+    expected = pd.DataFrame.from_dict({'C': {'col1': 0}}, orient='index')
+
+    result = uut.get_first_fraction(0.5, by_column='col1', sort_ascending=True)
+
+    assert result.equals(expected)
+
+
+def test_top_n_happy_path_descending():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    builder.append('H', col1=1)
+    uut = builder.build()
+    expected = pd.DataFrame.from_dict({'H': {'col1': 1}}, orient='index')
+
+    result = uut.get_first_fraction(.5, by_column='col1', sort_ascending=False)
+
+    assert result.equals(expected)

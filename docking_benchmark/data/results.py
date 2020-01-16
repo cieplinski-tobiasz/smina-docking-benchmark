@@ -1,3 +1,4 @@
+import math
 import pickle
 
 import pandas as pd
@@ -23,6 +24,26 @@ class OptimizedMolecules:
 
         squared_error = (series1 - series2) ** 2
         return squared_error.mean() ** (1 / 2)
+
+    def get_first_n(self, n: int, *, by_column: str, sort_ascending: bool = True):
+        if by_column not in self.molecules.columns:
+            raise ValueError('No column "' + by_column + '" in OptimizedMolecules')
+
+        if n <= 0:
+            raise ValueError('n must be positive')
+
+        return self.molecules.sort_values(by_column, ascending=sort_ascending)[:n]
+
+    def get_first_fraction(self, fraction: float, *, by_column: str, sort_ascending: bool = True):
+        if by_column not in self.molecules.columns:
+            raise ValueError('No column "' + by_column + '" in OptimizedMolecules')
+
+        if fraction <= 0 or fraction > 1:
+            raise ValueError('fraction must be in range (0, 1]')
+
+        n = math.ceil(fraction * self.molecules.shape[0])
+
+        return self.molecules.sort_values(by_column, ascending=sort_ascending)[:n]
 
     def save(self, path):
         with open(path, 'wb') as file:

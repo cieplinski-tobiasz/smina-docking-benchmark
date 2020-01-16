@@ -8,10 +8,10 @@ from keras import optimizers
 from keras.layers import Lambda
 from keras.models import Model
 
-from docking_benchmark.models.cvae import mol_utils as mu, hyperparameters
-from docking_benchmark.models.cvae.models import load_encoder, load_decoder, load_property_predictor, \
+from docking_baselines.models.cvae import hyperparameters, mol_utils as mu
+from docking_baselines.models.cvae.models import load_encoder, load_decoder, load_property_predictor, \
     variational_layers
-from docking_benchmark.utils.scripting import setup_and_get_logger
+from docking_benchmark.utils.logging import setup_and_get_logger
 
 CHARS = [
     "7", "6", "o", "]", "3", "s", "(", "-", "S", "/", "B",

@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from docking_benchmark.scripts.metrics.column_metrics import make_metrics
+from docking_baselines.scripts.metrics.column_metrics import make_metrics
 
 
 def _parse_args():

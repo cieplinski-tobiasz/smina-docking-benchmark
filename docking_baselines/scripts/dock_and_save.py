@@ -11,9 +11,9 @@ import os.path
 
 import pandas as pd
 
-from docking_benchmark.utils import scripting
-from docking_benchmark.docking.smina import docking
 from docking_benchmark.data import proteins
+from docking_benchmark.docking.smina import docking
+from docking_benchmark.utils.logging import setup_and_get_logger
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def _parse_args():
     parser.add_argument('-s', '--start-index', default=1, type=int)
     arguments = parser.parse_args()
 
-    scripting.setup_and_get_logger(arguments.debug)
+    setup_and_get_logger(arguments.debug)
 
     if not arguments.output_dir:
         arguments.output_dir = os.path.dirname(os.path.abspath(arguments.ligands))

@@ -61,13 +61,13 @@ self.implementation ==1 : mem
 self.implementation ==0 : cpu
 
 """
-from keras.layers.recurrent import GRU
+import numpy as np
 from keras import backend as K
 from keras.engine import InputSpec
-import numpy as np
+from keras.layers.recurrent import GRU
 
 if K.backend() == 'tensorflow':
-    from docking_benchmark.models.cvae.sampled_rnn_tf import sampled_rnn
+    from docking_baselines.models.cvae.sampled_rnn_tf import sampled_rnn
 else:
     raise NotImplemented("Backend not implemented")
 

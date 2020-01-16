@@ -1,7 +1,7 @@
 import numpy as np
 from rdkit.Chem import AllChem as Chem
 
-from docking_benchmark.utils.scripting import setup_and_get_logger
+from docking_benchmark.utils.logging import setup_and_get_logger
 
 logger = setup_and_get_logger(name=__name__)
 

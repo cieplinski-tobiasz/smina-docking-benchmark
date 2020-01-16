@@ -2,10 +2,10 @@ import math
 
 from keras.callbacks import ModelCheckpoint
 
-import docking_benchmark.models.gvae.zinc_grammar as zinc_grammar
-from docking_benchmark.models.gvae.model_zinc import MoleculeVAE, MAX_LEN
-from docking_benchmark.models.gvae.molecule_vae import ZincGrammarModel
-from docking_benchmark.utils.scripting import setup_and_get_logger
+import docking_baselines.models.gvae.zinc_grammar as zinc_grammar
+from docking_baselines.models.gvae.model_zinc import MoleculeVAE, MAX_LEN
+from docking_baselines.models.gvae.molecule_vae import ZincGrammarModel
+from docking_benchmark.utils.logging import setup_and_get_logger
 
 logger = setup_and_get_logger(name=__name__)
 

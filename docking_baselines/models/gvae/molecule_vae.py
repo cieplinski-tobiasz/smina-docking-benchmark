@@ -1,9 +1,9 @@
 import nltk
 import numpy as np
 
-import docking_benchmark.models.gvae.model_zinc as model_zinc
-import docking_benchmark.models.gvae.zinc_grammar as zinc_grammar
-from docking_benchmark.utils.scripting import setup_and_get_logger
+import docking_baselines.models.gvae.model_zinc as model_zinc
+import docking_baselines.models.gvae.zinc_grammar as zinc_grammar
+from docking_benchmark.utils.logging import setup_and_get_logger
 
 NOTHING_PRODUCTION = 'Nothing'
 

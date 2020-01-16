@@ -1,6 +1,6 @@
 import pytest
 
-import docking_benchmark.models.cvae.mol_utils as uut
+import docking_baselines.models.cvae.mol_utils as uut
 
 
 @pytest.mark.parametrize(

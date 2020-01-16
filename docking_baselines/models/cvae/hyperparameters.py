@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 from copy import deepcopy
 
-from docking_benchmark.utils.scripting import setup_and_get_logger
+from docking_benchmark.utils.logging import setup_and_get_logger
 
 DEFAULT_PARAMETERS = {
     # for starting model from a checkpoint

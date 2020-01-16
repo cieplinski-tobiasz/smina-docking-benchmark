@@ -2,9 +2,10 @@ import argparse
 import logging
 
 import docking_benchmark.data.proteins as proteins
+from docking_baselines.models.models import ALL_MODELS
+from docking_baselines.utils import scripting
 from docking_benchmark.docking.smina.docking import dock_smiles
-from docking_benchmark.models.models import ALL_MODELS
-from docking_benchmark.utils import scripting
+from docking_benchmark.utils.logging import setup_and_get_logger, disable_rdkit_logging
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,9 @@ def _parse_args():
     parser.add_argument('--n-cpu', default=4, type=int)
 
     args = parser.parse_args()
-    scripting.setup_and_get_logger(args.debug)
+    setup_and_get_logger(args.debug)
     scripting.set_keras_cores(args.n_cpu)
-    scripting.disable_rdkit_logging()
+    disable_rdkit_logging()
 
     if args.model not in ALL_MODELS:
         logger.error(f'No model named {args.model}')

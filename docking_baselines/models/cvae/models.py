@@ -8,7 +8,7 @@ from keras.layers.recurrent import GRU
 from keras.models import Model
 from keras.models import load_model
 
-from docking_benchmark.models.cvae.tgru_k2_gpu import TerminalGRU
+from docking_baselines.models.cvae.tgru_k2_gpu import TerminalGRU
 
 
 def encoder_model(params):

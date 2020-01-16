@@ -2,14 +2,14 @@ import math
 
 from keras.callbacks import ModelCheckpoint
 
-from docking_benchmark.models.cvae.vae_utils import VAEUtils
-from docking_benchmark.utils.scripting import setup_and_get_logger
+from docking_baselines.models.cvae.vae_utils import VAEUtils
+from docking_benchmark.utils.logging import setup_and_get_logger
 
 logger = setup_and_get_logger(name=__name__)
 
 
 def get_cvae_model(lr=2e-4):
-    return VAEUtils(exp_file=None, lr=lr, estimate_estandard=False)
+    return VAEUtils(exp_file=None, lr=lr)
 
 
 def train_cvae(cvae, dataset, *, epochs=15, mode='generator', batch_size=64, save_path=None):

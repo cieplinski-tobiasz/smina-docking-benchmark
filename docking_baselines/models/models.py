@@ -1,10 +1,10 @@
 import os
 
+from docking_baselines.models.cvae.molecule_generator import CVAEGradientGenerator
+from docking_baselines.models.cvae.trainer import get_cvae_model, train_cvae
+from docking_baselines.models.gvae.molecule_generator import GVAEGradientGenerator
+from docking_baselines.models.gvae.trainer import get_gvae_model, train_gvae
 from docking_benchmark.data.directories import PRETRAINED_MODELS
-from docking_benchmark.models.cvae.molecule_generator import CVAEGradientGenerator
-from docking_benchmark.models.gvae.molecule_generator import GVAEGradientGenerator
-from docking_benchmark.models.cvae.trainer import get_cvae_model, train_cvae
-from docking_benchmark.models.gvae.trainer import get_gvae_model, train_gvae
 
 ALL_MODELS = {
     'cvae': {

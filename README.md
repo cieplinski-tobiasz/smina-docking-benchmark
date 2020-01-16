@@ -12,11 +12,16 @@ Download [this zip](https://drive.google.com/open?id=1HJNgHBWE2eZc2gsHQhqay-V17G
 
 ## Experiments
 
+Both experiments requires `DOCKING_BASELINES_DIR` environment variable to be set with path to docking_baselines package.
+
 ### Modified physics optimization
 
 This experiment "changes the physics" used by smina during docking,
 generates molecule that are supposed to dock well according to the custom scoring function
 and double evaluates the generated molecules with default scoring function.
+
+The experiment requires `CUSTOM_SCORING_DIR` environment variable to be set with path to directory
+containing custom scorings text files
 
 To run it use the `experiments/modified_physics_optimization/run_experiment.sh` script.
 The script requires three arguments in given order:
@@ -34,7 +39,7 @@ This experiment generates molecules that optimize a single component of docking 
 instead of full score and double evaluate the generated molecules using default scoring function.
 
 To run it use the `experiments/single_component_optimization/run_experiment.sh` script.
-The script requires three arguments in given order:
+The script requires four arguments in given order:
 * `model` - `gvae` or `cvae` - pretrained model used for generating molecules
 * `dataset` - dataset used to fine-tune the model;
 available datasets for a given protein are listed in `DOCKING_BENCHMARK_DATA/proteins_data/protein/metadata.json` file;

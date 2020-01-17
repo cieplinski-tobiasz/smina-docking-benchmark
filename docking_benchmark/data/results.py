@@ -1,7 +1,11 @@
 import math
 import pickle
+from typing import List
 
+import numpy as np
 import pandas as pd
+
+from docking_benchmark.utils.chemistry import calculate_pairwise_similarities
 
 
 class OptimizedMolecules:
@@ -44,6 +48,23 @@ class OptimizedMolecules:
         n = math.ceil(fraction * self.molecules.shape[0])
 
         return self.molecules.sort_values(by_column, ascending=sort_ascending)[:n]
+
+    def most_similar_tanimoto(self, to_smiles: List[str]):
+        tanimoto_similarities = calculate_pairwise_similarities(
+            self.molecules.index.tolist(),
+            to_smiles
+        )
+
+        most_similar_indices = np.argmax(tanimoto_similarities, axis=1)
+        max_tanimoto_similarities = np.array(
+            [tanimoto_similarities[i, most_similar_indices[i]] for i in range(self.molecules.shape[0])])
+
+        most_similars = pd.DataFrame(index=self.molecules.index.copy())
+        most_similars['tanimoto_similarity'] = max_tanimoto_similarities
+        most_similars['most_similar_smiles'] = [to_smiles[most_similar_indices[i]] for i in
+                                                range(self.molecules.shape[0])]
+
+        return most_similars
 
     def save(self, path):
         with open(path, 'wb') as file:

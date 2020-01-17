@@ -258,3 +258,31 @@ def test_top_n_happy_path_descending():
     result = uut.get_first_fraction(.5, by_column='col1', sort_ascending=False)
 
     assert result.equals(expected)
+
+
+def test_most_similar_tanimoto_single_element_happy_path():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    uut = builder.build()
+    expected = pd.DataFrame.from_dict({'C': {'tanimoto_similarity': 1.0, 'most_similar_smiles': 'C'}}, orient='index')
+
+    result = uut.most_similar_tanimoto(['C'])
+
+    assert result.equals(expected)
+
+
+def test_most_similar_tanimoto_multiple_elements_happy_path():
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0)
+    builder.append('Cl', col1=0)
+    builder.append('F', col1=0)
+    uut = builder.build()
+    expected = pd.DataFrame.from_dict({
+        'C': {'tanimoto_similarity': 1.0, 'most_similar_smiles': 'C'},
+        'F': {'tanimoto_similarity': 1.0, 'most_similar_smiles': 'F'},
+        'Cl': {'tanimoto_similarity': 0.0, 'most_similar_smiles': 'C'},
+    }, orient='index')
+
+    result = uut.most_similar_tanimoto(['C', 'F'])
+
+    assert result.equals(expected)

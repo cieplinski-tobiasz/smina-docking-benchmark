@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 import docking_benchmark.data.directories
+from docking_benchmark.docking.smina.docking import dock_smiles
 
 PROTEIN_FORMATS = (
     '.pdb',
@@ -232,6 +233,15 @@ class Protein:
     def pocket_center(self) -> List[float]:
         """list[float]: Pocket center coordinates used for docking"""
         return self.metadata['pocket_center']
+
+    def dock_smiles_to_protein(self, smiles, **docking_kwargs):
+        if 'pocket_center' in docking_kwargs:
+            raise ValueError('Do not pass pocket_center as it is provided by the protein.')
+
+        if 'receptor_path' in docking_kwargs:
+            raise ValueError('Do not pass receptor_path as it is provided by the protein.')
+
+        return dock_smiles(smiles, self.path, pocket_center=self.pocket_center, **docking_kwargs)
 
 
 def get_proteins():

@@ -4,7 +4,6 @@ import logging
 import docking_benchmark.data.proteins as proteins
 from docking_baselines.models.models import ALL_MODELS
 from docking_baselines.utils import scripting
-from docking_benchmark.docking.smina.docking import dock_smiles
 from docking_benchmark.utils.logging import setup_and_get_logger, disable_rdkit_logging
 
 logger = logging.getLogger(__name__)
@@ -48,13 +47,6 @@ def _parse_args():
     return args
 
 
-def _make_smiles_docking_score_fn(receptor):
-    def smiles_docking_score_fn(smi):
-        return dock_smiles(smi, receptor.path, pocket_center=receptor.pocket_center)['docking_score']
-
-    return smiles_docking_score_fn
-
-
 if __name__ == '__main__':
     args = _parse_args()
     protein = proteins.get_proteins()[args.protein]
@@ -63,7 +55,7 @@ if __name__ == '__main__':
     generator = model_cls(args.model_path, dataset, mode=args.mode, fine_tune_epochs=0)
     optimized, random_gauss = generator.generate_optimized_molecules(
         args.n_molecules,
-        smiles_docking_score_fn=_make_smiles_docking_score_fn(protein),
+        smiles_docking_score_fn=protein.dock_smiles_to_protein,
         random_samples=args.random_samples,
         with_random_samples=True
     )

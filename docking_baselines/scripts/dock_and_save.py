@@ -63,10 +63,9 @@ if __name__ == '__main__':
         logger.info(f'Docking: {smiles} ({i + 1}/{csv_size})')
 
         try:
-            docking.dock_smiles(smiles, protein.path, protein.pocket_center,
-                                output_path=os.path.join(directory, f'{i}.mol2'),
-                                atom_terms_path=os.path.join(directory, f'{i}.ita'),
-                                custom_scoring=scoring_function)
+            docking.dock_to_mol2(smiles, protein.path, pocket_center=protein.pocket_center,
+                                 output_path=os.path.join(directory, f'{i}.mol2'),
+                                 atom_terms_path=os.path.join(directory, f'{i}.ita'))
         except Exception as e:
             logger.error(f'Failed docking: {smiles} ({i + 1}/{csv_size})')
             logger.exception(e)

@@ -20,10 +20,15 @@ def _parse_args():
     parser.add_argument('-c', '--csv', required=True)
     parser.add_argument('-p', '--protein', default='5ht1b')
     parser.add_argument('--smiles-column', default='SMILES')
-    parser.add_argument('-f', '--filter-results', default='minimum_affinity')
+    parser.add_argument('-f', '--filter-results', default='minimum_docking_score')
     parser.add_argument('-o', '--output', required=True)
 
-    return parser.parse_args()
+    arguments = parser.parse_args()
+
+    if arguments.filter_results not in ('minimum_docking_score', 'maximum_docking_score'):
+        raise ValueError('Invalid --filter-results (-f) value.')
+
+    return arguments
 
 
 if __name__ == '__main__':
@@ -36,9 +41,11 @@ if __name__ == '__main__':
         if not entry.name.endswith('.mol2'):
             continue
 
-        scores = smina.score_only(entry.path, protein.path, filter_results=args.filter_results)
-        scores.update(scores['pre_weighting_terms'])
-        del scores['pre_weighting_terms']
+        scores = smina.score_only(entry.path, protein.path)
+        aggregate = min if args.filter_results == 'minimum_docking_score' else max
+        scores = aggregate(scores, key=lambda d: d['docking_score'])
+        scores.update(scores['pre_weighting_terms'].pop())
+
         smiles_number, _ = os.path.splitext(os.path.basename(entry.path))
         smiles = ligands_csv.iloc[int(smiles_number)][args.smiles_column]
         scores['smiles'] = smiles

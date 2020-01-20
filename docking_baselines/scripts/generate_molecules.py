@@ -47,6 +47,13 @@ def _parse_args():
     return args
 
 
+def _make_smiles_docking_score_fn(protein):
+    def smiles_docking_score_fn(smi):
+        return dock_smiles(smi, protein.path, pocket_center=protein.pocket_center)['docking_center']
+
+    return smiles_docking_score_fn
+
+
 if __name__ == '__main__':
     args = _parse_args()
     protein = proteins.get_proteins()[args.protein]
@@ -55,7 +62,7 @@ if __name__ == '__main__':
     generator = model_cls(args.model_path, dataset, mode=args.mode)
     optimized, random_gauss = generator.generate_optimized_molecules(
         args.n_molecules,
-        smiles_docking_score_fn=lambda smi: dock_smiles(smi, protein.path, protein.pocket_center, ),
+        smiles_docking_score_fn=_make_smiles_docking_score_fn(protein),
         random_samples=100,
         with_random_samples=True
     )

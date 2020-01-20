@@ -47,9 +47,9 @@ def _parse_args():
     return args
 
 
-def _make_smiles_docking_score_fn(protein):
+def _make_smiles_docking_score_fn(receptor):
     def smiles_docking_score_fn(smi):
-        return dock_smiles(smi, protein.path, pocket_center=protein.pocket_center)['docking_center']
+        return dock_smiles(smi, receptor.path, pocket_center=receptor.pocket_center)['docking_center']
 
     return smiles_docking_score_fn
 

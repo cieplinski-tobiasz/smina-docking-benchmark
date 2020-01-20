@@ -17,7 +17,7 @@ def _parse_args():
     parser.add_argument('-o', '--output', required=True)
     parser.add_argument('-p', '--protein', default='5ht1b')
     parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('-n', '--n-molecules', default=250)
+    parser.add_argument('-n', '--n-molecules', type=int, default=250)
     parser.add_argument('-m', '--mode', default='minimize')
     parser.add_argument('-r', '--random-samples', type=int, default=100)
     parser.add_argument('--dataset', default='default')
@@ -50,7 +50,7 @@ def _parse_args():
 
 def _make_smiles_docking_score_fn(receptor):
     def smiles_docking_score_fn(smi):
-        return dock_smiles(smi, receptor.path, pocket_center=receptor.pocket_center)['docking_center']
+        return dock_smiles(smi, receptor.path, pocket_center=receptor.pocket_center)['docking_score']
 
     return smiles_docking_score_fn
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     protein = proteins.get_proteins()[args.protein]
     dataset = protein.datasets[args.dataset]
     model_cls = ALL_MODELS[args.model]['cls']
-    generator = model_cls(args.model_path, dataset, mode=args.mode)
+    generator = model_cls(args.model_path, dataset, mode=args.mode, fine_tune_epochs=0)
     optimized, random_gauss = generator.generate_optimized_molecules(
         args.n_molecules,
         smiles_docking_score_fn=_make_smiles_docking_score_fn(protein),

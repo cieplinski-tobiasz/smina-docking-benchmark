@@ -44,7 +44,6 @@ if __name__ == '__main__':
         scores = smina.score_only(entry.path, protein.path)
         aggregate = min if args.filter_results == 'minimum_docking_score' else max
         scores = aggregate(scores, key=lambda d: d['docking_score'])
-        scores.update(scores['pre_weighting_terms'].pop())
 
         smiles_number, _ = os.path.splitext(os.path.basename(entry.path))
         smiles = ligands_csv.iloc[int(smiles_number)][args.smiles_column]

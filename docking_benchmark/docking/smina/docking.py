@@ -97,7 +97,7 @@ def dock_smiles(smiles: str, receptor_path, *, output_path=None, pocket_center: 
             exhaustiveness=exhaustiveness, seed=seed, timeout=timeout, n_cpu=n_cpu,
             atom_terms_path=atom_terms_path)
         scores = score_only(output_path, receptor_path, timeout=timeout)
-        return min(scores, key=scores['docking_score'])
+        return min(scores, key=lambda mode_score: mode_score['docking_score'])
 
 
 def score_only(mol2_path, receptor, timeout: int = 600) -> dict:
@@ -126,6 +126,7 @@ def score_only(mol2_path, receptor, timeout: int = 600) -> dict:
     scores = docking_benchmark.docking.smina.parsing.parse_score_only(stdout)
 
     for mode_score in scores:
-        mode_score['docking_score'] = scores['affinity'].pop()
+        mode_score['docking_score'] = mode_score.pop('affinity')
+        mode_score.update(mode_score.pop('pre_weighting_terms'))
 
     return scores

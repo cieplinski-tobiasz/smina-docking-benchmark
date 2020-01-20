@@ -19,6 +19,7 @@ def _parse_args():
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('-n', '--n-molecules', default=250)
     parser.add_argument('-m', '--mode', default='minimize')
+    parser.add_argument('-r', '--random-samples', type=int, default=100)
     parser.add_argument('--dataset', default='default')
     parser.add_argument('--n-cpu', default=4, type=int)
 
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     optimized, random_gauss = generator.generate_optimized_molecules(
         args.n_molecules,
         smiles_docking_score_fn=_make_smiles_docking_score_fn(protein),
-        random_samples=100,
+        random_samples=args.random_samples,
         with_random_samples=True
     )
 

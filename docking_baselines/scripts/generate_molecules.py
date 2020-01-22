@@ -59,7 +59,7 @@ def generate_and_dock_molecules(*, model, model_path, output_dir, protein, n_mol
         n_molecules,
         smiles_docking_score_fn=protein.dock_smiles_to_protein,
         random_samples=random_samples,
-        with_random_samples=True,
+        with_random_samples=random_samples > 0,
         docking_n_cpu=n_cpu
     )
 

@@ -1,7 +1,0 @@
--1.0  vdw(i=4,_j=8,_s=0,_^=100,_c=8)
--1.0  vdw(i=6,_j=12,_s=1,_^=100,_c=8)
-1.0  num_heavy_atoms
-1.0  num_tors_add
-1.0  num_hydrophobic_atoms
--1.0 hydrophobic(g=0.5,_b=1.5,_c=8)
--1.0 non_dir_h_bond(g=-0.7,_b=0,_c=8)

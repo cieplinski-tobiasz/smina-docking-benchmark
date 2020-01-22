@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os.path
 
 import docking_benchmark.data.proteins as proteins
 from docking_baselines.models.models import ALL_MODELS
@@ -13,12 +14,13 @@ def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('model')
     parser.add_argument('--model_path')
-    parser.add_argument('-o', '--output', required=True)
+    parser.add_argument('-o', '--output-dir', required=True)
     parser.add_argument('-p', '--protein', default='5ht1b')
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('-n', '--n-molecules', type=int, default=250)
     parser.add_argument('-m', '--mode', default='minimize')
     parser.add_argument('-r', '--random-samples', type=int, default=100)
+    parser.add_argument('-f', '--fine-tune-epochs', type=int, default=5)
     parser.add_argument('--dataset', default='default')
     parser.add_argument('--n-cpu', default=4, type=int)
 
@@ -39,27 +41,37 @@ def _parse_args():
         args.model_path = ALL_MODELS[args.model]['pretrained']
 
     if args.debug:
-        debug_n_molecules = 5
-        logger.debug(f'{debug_n_molecules} molecules will be generated '
-                     'due to debug mode on.')
-        args.n_molecules = debug_n_molecules
+        args.n_molecules = 2
+        args.fine_tune_epochs = 0
+        args.random_samples = 2
+        logger.debug('Arguments updated due to debug mode on, current args: %s', str(args))
 
     return args
 
 
-if __name__ == '__main__':
-    args = _parse_args()
-    protein = proteins.get_proteins()[args.protein]
-    dataset = protein.datasets[args.dataset]
-    model_cls = ALL_MODELS[args.model]['cls']
-    generator = model_cls(args.model_path, dataset, mode=args.mode, fine_tune_epochs=0)
+def generate_and_dock_molecules(*, model, model_path, output_dir, protein, n_molecules, mode, random_samples,
+                                fine_tune_epochs, dataset, n_cpu):
+    protein = proteins.get_proteins()[protein]
+    dataset = protein.datasets[dataset]
+    model_cls = ALL_MODELS[model]['cls']
+    generator = model_cls(model_path, dataset, mode=mode, fine_tune_epochs=fine_tune_epochs, output_dir=output_dir)
     optimized, random_gauss = generator.generate_optimized_molecules(
-        args.n_molecules,
+        n_molecules,
         smiles_docking_score_fn=protein.dock_smiles_to_protein,
-        random_samples=args.random_samples,
-        with_random_samples=True
+        random_samples=random_samples,
+        with_random_samples=True,
+        docking_n_cpu=n_cpu
     )
 
-    optimized.save(args.output + '.om')
-    random_gauss.save(args.output + '.gauss.om')
-    optimized.to_csv(args.output, columns=['predicted_score'])
+    optimized.save(os.path.join(output_dir, 'generated.om'))
+    random_gauss.save(os.path.join(output_dir, 'gauss.om'))
+    optimized.to_csv(os.path.join(output_dir, 'decomposed_optimized_molecules.csv'), without_columns=['latent_vector'])
+
+
+if __name__ == '__main__':
+    args = vars(_parse_args())
+
+    if 'debug' in args:
+        del args['debug']
+
+    generate_and_dock_molecules(**args)

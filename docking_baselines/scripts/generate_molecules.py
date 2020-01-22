@@ -54,13 +54,13 @@ def generate_and_dock_molecules(*, model, model_path, output_dir, protein, n_mol
     protein = proteins.get_proteins()[protein]
     dataset = protein.datasets[dataset]
     model_cls = ALL_MODELS[model]['cls']
-    generator = model_cls(model_path, dataset, mode=mode, fine_tune_epochs=fine_tune_epochs, output_dir=output_dir)
+    generator = model_cls(model_path, dataset, mode=mode, fine_tune_epochs=fine_tune_epochs, output_dir=output_dir,
+                          docking_n_cpu=n_cpu)
     optimized, random_gauss = generator.generate_optimized_molecules(
         n_molecules,
         smiles_docking_score_fn=protein.dock_smiles_to_protein,
         random_samples=random_samples,
-        with_random_samples=random_samples > 0,
-        docking_n_cpu=n_cpu
+        with_random_samples=random_samples > 0
     )
 
     optimized.save(os.path.join(output_dir, 'generated.om'))

@@ -87,6 +87,23 @@ def test_builder_returns_false_when_smiles_not_already_present():
     assert result
 
 
+def test_builder_in_operator_returns_true_when_smiles_already_present():
+    uut = OptimizedMolecules.Builder()
+    uut.append('C', col2=2)
+
+    result = 'C' in uut
+
+    assert result
+
+
+def test_builder_in_operator_returns_false_when_smiles_not_already_present():
+    uut = OptimizedMolecules.Builder()
+
+    result = 'C' in uut
+
+    assert not result
+
+
 def test_rmse_raises_when_col1_not_in_molecules():
     builder = OptimizedMolecules.Builder()
     builder.append('C', col=1)

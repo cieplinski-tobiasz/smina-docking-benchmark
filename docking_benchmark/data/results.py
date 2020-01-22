@@ -83,6 +83,9 @@ class OptimizedMolecules:
             self.total_samples = 0
             self._molecule_attributes = {}
 
+        def __contains__(self, smiles):
+            return smiles in self._molecule_attributes
+
         def append(self, smiles: str, **attributes):
             if smiles in self._molecule_attributes:
                 return False

@@ -75,7 +75,13 @@ class OptimizedMolecules:
         with open(path, 'rb') as file:
             return pickle.load(file)
 
-    def to_csv(self, path, index_label='SMILES', **pd_kwargs):
+    def to_csv(self, path, index_label='SMILES', without_columns=None, **pd_kwargs):
+        if without_columns is not None and 'columns' in pd_kwargs:
+            raise ValueError('without_columns and columns cannot be used together')
+
+        if without_columns is not None:
+            pd_kwargs['columns'] = set(self.molecules.columns.to_list()) - set(without_columns)
+
         self.molecules.to_csv(path, index_label=index_label, **pd_kwargs)
 
     class Builder:

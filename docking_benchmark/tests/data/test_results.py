@@ -183,6 +183,29 @@ def test_to_csv_happy_path(tmp_path):
     assert file.read_text() == expected
 
 
+def test_to_csv_with_without_columns(tmp_path):
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0, col2=1)
+    builder.append('H', col1=2.5, col2=1)
+    uut = builder.build()
+    file = tmp_path / 'tmp_file.csv'
+    expected = textwrap.dedent('''\
+    SMILES,col1
+    C,0.0
+    H,2.5
+    ''')
+    uut.to_csv(file, without_columns=['col2'])
+
+    assert file.read_text() == expected
+
+
+def test_to_csv_call_with_without_columns_and_columns_raises(tmp_path):
+    uut = OptimizedMolecules.Builder().build()
+
+    with pytest.raises(ValueError):
+        uut.to_csv('dummy_path', columns=[], without_columns=[])
+
+
 def test_first_n_raises_with_negative_n():
     builder = OptimizedMolecules.Builder()
     builder.append('C', col1=0)

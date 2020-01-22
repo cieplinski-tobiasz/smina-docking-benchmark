@@ -70,6 +70,23 @@ def test_builder_does_not_calculate_validity_when_total_samples_is_zero():
     assert 'validity' not in result.metrics
 
 
+def test_builder_returns_false_when_smiles_already_present():
+    uut = OptimizedMolecules.Builder()
+    uut.append('C', col1=1)
+
+    result = uut.append('C', col2=2)
+
+    assert not result
+
+
+def test_builder_returns_false_when_smiles_not_already_present():
+    uut = OptimizedMolecules.Builder()
+
+    result = uut.append('C', col2=2)
+
+    assert result
+
+
 def test_rmse_raises_when_col1_not_in_molecules():
     builder = OptimizedMolecules.Builder()
     builder.append('C', col=1)

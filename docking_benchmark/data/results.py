@@ -84,6 +84,9 @@ class OptimizedMolecules:
             self._molecule_attributes = {}
 
         def append(self, smiles: str, **attributes):
+            if smiles in self._molecule_attributes:
+                return False
+
             if type(smiles) is not str:
                 raise TypeError('Expecting SMILES to be a str')
 
@@ -93,6 +96,7 @@ class OptimizedMolecules:
                 raise ValueError('SMILES is empty')
 
             self._molecule_attributes[smiles] = attributes
+            return True
 
         @property
         def size(self):

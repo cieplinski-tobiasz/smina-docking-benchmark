@@ -31,17 +31,20 @@ def embed_rdkit_molecule(molecule: Chem.Mol, seed: int, silent: bool = True) -> 
     Raises:
         RuntimeError: If embedding fails and silent is False.
     """
-    molecule = Chem.AddHs(molecule)
-    conf_id = AllChem.EmbedMolecule(molecule, useRandomCoords=True, ignoreSmoothingFailures=True, randomSeed=seed)
+    try:
+        molecule = Chem.AddHs(molecule)
+        conf_id = AllChem.EmbedMolecule(molecule, useRandomCoords=True, ignoreSmoothingFailures=True, randomSeed=seed)
 
-    if conf_id == -1:
-        conf_id = AllChem.EmbedMolecule(molecule, useRandomCoords=False, ignoreSmoothingFailures=True, randomSeed=seed)
+        if conf_id == -1:
+            conf_id = AllChem.EmbedMolecule(molecule, useRandomCoords=False, ignoreSmoothingFailures=True, randomSeed=seed)
 
-    if conf_id == -1:
+        if conf_id == -1:
+            raise ValueError('Embedding failure')
+    except Exception as e:
         if silent:
             return None
         else:
-            raise ValueError('Embedding failure')
+            raise ValueError(e)
 
     return molecule
 
@@ -66,14 +69,17 @@ def optimize_rdkit_molecule(molecule: Chem.Mol, silent: bool = False) -> Optiona
     Raises:
         RuntimeError: If optimization fails and silent is False.
     """
-    for max_iterations in [200, 2000, 20000, 200000]:
-        if AllChem.UFFOptimizeMolecule(molecule, maxIters=max_iterations) == 0:
-            break
-    else:
+    try:
+        for max_iterations in [200, 2000, 20000, 200000]:
+            if AllChem.UFFOptimizeMolecule(molecule, maxIters=max_iterations) == 0:
+                break
+        else:
+            raise ValueError('Structure optimization failure')
+    except Exception as e:
         if silent:
             return None
         else:
-            raise ValueError('Structure optimization failure')
+            raise ValueError(e)
 
     return molecule
 

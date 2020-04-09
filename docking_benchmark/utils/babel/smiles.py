@@ -45,23 +45,26 @@ def to_mol2_file(smiles: str, output_filename: str, seed: int = 0, silent: bool 
     Raises:
         RuntimeError: If conversion fails and silent is False.
     """
-    molecule = to_rdkit_mol(smiles)
+    try:
+        molecule = to_rdkit_mol(smiles)
 
-    if molecule is None:
-        raise ValueError(f'Failed to convert {smiles} to RDKit mol')
+        if molecule is None:
+            raise ValueError(f'Failed to convert {smiles} to RDKit mol')
 
-    molecule = chemistry.embed_rdkit_molecule(molecule, seed)
-    chemistry.optimize_rdkit_molecule(molecule)
-    Chem.MolToMolFile(molecule, output_filename)
+        molecule = chemistry.embed_rdkit_molecule(molecule, seed)
+        chemistry.optimize_rdkit_molecule(molecule)
+        Chem.MolToMolFile(molecule, output_filename)
 
-    command = f'obabel -imol {output_filename} -omol2 -O {output_filename}'
-    openbabel_return_code = subprocess.run(command, shell=True, stdout=subprocess.DEVNULL,
-                                           stderr=subprocess.DEVNULL).returncode
+        command = f'obabel -imol {output_filename} -omol2 -O {output_filename}'
+        openbabel_return_code = subprocess.run(command, shell=True, stdout=subprocess.DEVNULL,
+                                               stderr=subprocess.DEVNULL).returncode
 
-    if openbabel_return_code != 0:
+        if openbabel_return_code != 0:
+            raise ValueError(f'Failed to convert {smiles} to .mol2')
+    except Exception as e:
         if silent:
             return None
         else:
-            raise ValueError(f'Failed to convert {smiles} to .mol2')
+            raise ValueError(e)
 
     return output_filename

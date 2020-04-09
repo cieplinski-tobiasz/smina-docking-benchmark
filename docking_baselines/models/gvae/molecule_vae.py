@@ -88,6 +88,10 @@ class ZincGrammarModel(object):
 
         for i, smi in enumerate(smiles):
             try:
+                if type(smi) is not str:
+                    logger.error(f'Ignoring SMILES {smi} since it is not str')
+                    continue
+
                 tokens = self._tokenize(smi)
                 parse_tree = self._parser.parse(tokens).__next__()
                 production_seq = parse_tree.productions()

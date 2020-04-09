@@ -58,6 +58,15 @@ def smiles_to_hot_filter(smiles, char_indices, max_len, with_valid_indices=False
     indices = []
 
     for i, smi in enumerate(smiles):
+        if type(smi) is not str:
+            logger.warning(f'SMILES {smi} type is not str. Trying to convert.')
+
+            try:
+                smi = str(smi)
+            except ValueError as e:
+                logger.error(f'Failed conversion to str for {smi}', exc_info=e)
+                continue
+
         if len(smi) > max_len:
             continue
 

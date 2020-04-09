@@ -75,7 +75,7 @@ def dock_to_mol2(smiles: str, receptor_path: str, *, output_path, pocket_center:
             '--size_y', pocket_range[1],
             '--size_z', pocket_range[2],
             '--exhaustiveness', exhaustiveness,
-            '--out', output_path,
+            '--out', os.path.abspath(output_path),
         ]
 
         if atom_terms_path is not None:

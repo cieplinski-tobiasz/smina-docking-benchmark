@@ -40,6 +40,8 @@ def _parse_args():
 
         args.model_path = ALL_MODELS[args.model]['pretrained']
 
+    args.output_dir = os.path.realpath(args.output_dir)
+
     if args.debug:
         args.n_molecules = 2
         args.fine_tune_epochs = 0

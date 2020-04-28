@@ -38,7 +38,8 @@ class GVAEGradientGenerator:
         self.descent_iterations = descent_iterations
         self.descent_lr = descent_lr
         self.max_len = max_len
-        self.dataset = self.get_filtered_dataset(dataset)
+        self.train_dataset = self.get_filtered_dataset((dataset[0], dataset[2]))
+        self.test_dataset = self.get_filtered_dataset((dataset[1], dataset[3]))
 
         if mode == 'minimize':
             self.descent_lr *= -1
@@ -63,9 +64,13 @@ class GVAEGradientGenerator:
         if self.fine_tune_epochs <= 0 or self.fine_tuned:
             return
 
-        one_hots = self.gvae.to_one_hots(self.dataset[0])
-        self.gvae.vae.autoencoder.fit(one_hots, one_hots, epochs=self.fine_tune_epochs,
-                                      validation_split=self.fine_tune_test_size)
+        one_hots_train = self.gvae.to_one_hots(self.train_dataset[0])
+        one_hots_test = self.gvae.to_one_hots(self.test_dataset[0])
+        self.gvae.vae.autoencoder.fit(
+            one_hots_train, one_hots_train,
+            epochs=self.fine_tune_epochs,
+            validation_data=(one_hots_test, one_hots_test)
+        )
 
         with tempfile.NamedTemporaryFile() as tmp:
             self.gvae.vae.autoencoder.save(tmp.name)
@@ -76,12 +81,15 @@ class GVAEGradientGenerator:
     def _train_mlp(self):
         if self.mlp is None:
             self.mlp = MLPPredictedDockingScore(
-                self.dataset, input_dim=self.latent,
+                self.train_dataset, input_dim=self.latent,
                 epochs=self.mlp_fit_epochs, test_fraction=self.mlp_test_size,
                 to_latent_fn=self._smiles_to_latent_fn()
             )
 
     def random_gauss(self, smiles_docking_score_fn, size):
+        assert smiles_docking_score_fn is not None
+        assert size is not None
+
         results_builder = OptimizedMolecules.Builder()
 
         while results_builder.size < size:
@@ -115,24 +123,59 @@ class GVAEGradientGenerator:
 
         return results_builder.build()
 
-    def generate_optimized_molecules(self,
-                                     number_molecules: int,
-                                     with_random_samples: bool = False,
-                                     smiles_docking_score_fn=None,
-                                     random_samples: int = 100):
-        self._fine_tune()
-        self._train_mlp()
+    def _descent_steps(self, smiles_docking_score_fn, size):
+        assert smiles_docking_score_fn is not None
+        assert size is not None
+        logger.info('Descent steps start')
 
-        gauss_samples = None
+        batch_size = 32
+        min_valid_steps = 5
 
-        if with_random_samples:
-            assert smiles_docking_score_fn is not None
-            assert random_samples is not None
-            logger.info('Random sampling')
-            gauss_samples = self.random_gauss(smiles_docking_score_fn, random_samples)
+        results = []
+        train = np.array(self.train_dataset[0])
 
+        while len(results) < size:
+            logger.info(f'Valid descent steps results: {len(results)} / {size}')
+
+            train_smiles = train[np.random.choice(train.shape[0], batch_size, replace=False)].tolist()
+            latents = self.gvae.encode(train_smiles)
+            latent_changes = [latents]
+
+            for _ in range(self.descent_iterations):
+                latents += self.mlp.gradient(latents) * self.descent_lr
+                latent_changes.append(latents)
+
+            decoded_series = [self.gvae.decode(delta) for delta in latent_changes]
+            smiles_changes = [
+                [canonicalize(smi) for smi in smi_list]
+                for smi_list in decoded_series
+            ]
+
+            for i in range(batch_size):
+                descent_results = OptimizedMolecules.Builder()
+
+                for j in range(self.descent_iterations + 1):
+                    smi = smiles_changes[j][i]
+
+                    if smi is not None and is_valid(smi):
+                        try:
+                            docking_score = smiles_docking_score_fn(smi, n_cpu=self.docking_n_cpu)
+                            descent_results.append(
+                                smi,
+                                latent_vector=latent_changes[j][i],
+                                step=j,
+                                **docking_score
+                            )
+                        except (ValueError, RuntimeError):
+                            logger.error('Docking failed for %s', smi)
+
+                if descent_results.size > min_valid_steps:
+                    results.append(descent_results)
+
+        return results
+
+    def _generate_optimized_molecules(self, number_molecules, smiles_docking_score_fn):
         results_builder = OptimizedMolecules.Builder()
-
         while results_builder.size < number_molecules:
             logger.info(f'Generated {results_builder.size} / {number_molecules}')
             latents = np.random.normal(size=(self.batch_size, self.latent))
@@ -176,8 +219,20 @@ class GVAEGradientGenerator:
                     break
 
             results_builder.total_samples += self.batch_size
+        return results_builder.build()
 
-        return results_builder.build(), gauss_samples
+    def generate_optimized_molecules(self,
+                                     number_molecules: int,
+                                     with_random_samples: bool = False,
+                                     smiles_docking_score_fn=None,
+                                     random_samples: int = 100):
+        self._fine_tune()
+        self._train_mlp()
+
+        gauss_samples = self.random_gauss(smiles_docking_score_fn, random_samples) if with_random_samples else None
+        optimized = self._generate_optimized_molecules(number_molecules, smiles_docking_score_fn)
+
+        return optimized, gauss_samples
 
     def get_filtered_dataset(self, dataset):
         logger.info('Filtering dataset')

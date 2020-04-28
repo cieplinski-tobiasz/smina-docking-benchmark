@@ -54,20 +54,21 @@ def _parse_args():
 def generate_and_dock_molecules(*, model, model_path, output_dir, protein, n_molecules, mode, random_samples,
                                 fine_tune_epochs, dataset, n_cpu):
     protein = proteins.get_proteins()[protein]
-    dataset = protein.datasets[dataset]
+    dataset = protein.datasets.with_train_test_split(dataset, test_size=0.1)
     model_cls = ALL_MODELS[model]['cls']
     generator = model_cls(model_path, dataset, mode=mode, fine_tune_epochs=fine_tune_epochs, output_dir=output_dir,
                           docking_n_cpu=n_cpu)
-    optimized, random_gauss = generator.generate_optimized_molecules(
-        n_molecules,
-        smiles_docking_score_fn=protein.dock_smiles_to_protein,
-        random_samples=random_samples,
-        with_random_samples=random_samples > 0
-    )
 
+    generator._fine_tune()
+    generator._train_mlp()
+    gauss = generator.random_gauss(protein.dock_smiles_to_protein, random_samples)
+    gauss.save(os.path.join(output_dir, 'gauss.om'))
+    optimized = generator._generate_optimized_molecules(n_molecules, protein.dock_smiles_to_protein)
     optimized.save(os.path.join(output_dir, 'generated.om'))
-    random_gauss.save(os.path.join(output_dir, 'gauss.om'))
-    optimized.to_csv(os.path.join(output_dir, 'decomposed_optimized_molecules.csv'), without_columns=['latent_vector'])
+    descent = generator._descent_steps(protein.dock_smiles_to_protein, 50)
+
+    for i, d in enumerate(descent):
+        d.save(os.path.join(output_dir, f'descent_{i}.om'))
 
 
 if __name__ == '__main__':

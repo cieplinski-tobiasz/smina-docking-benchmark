@@ -1,9 +1,11 @@
 import json
+import math
 import os
 from typing import List
 
 import numpy as np
 import pandas as pd
+import sklearn
 
 import docking_benchmark.data.directories
 from docking_benchmark.docking.smina.docking import dock_smiles
@@ -55,6 +57,77 @@ class Datasets:
         smiles_column = dataset.get('smiles_column', self._DEFAULT_SMILES_COLUMN)
         score_column = dataset.get('score_column', self._DEFAULT_SCORE_COLUMN)
         return csv[smiles_column].tolist(), csv[score_column].to_numpy()
+
+    def with_train_test_split(self, dataset_name: str, *,
+                              test_size: float,
+                              random_state: int = 0,
+                              stratify_via_column: str = None):
+        """Loads the dataset with given name to memory
+        and splits the dataset into train and test datasets.
+
+        Args:
+            dataset_name (str): Name of the dataset to load.
+            test_size (float): Fraction of test size.
+            random_state (int): Seed used in splitting.
+            stratify_via_column (str): Which column use for stratify.
+
+        Returns:
+            tuple[list[str], list[str], np.array, np.array]: Train SMILES, test SMILES, train score, test score
+
+        Raises:
+            KeyError: If dataset with given name does not exist.
+        """
+        if dataset_name not in self._datasets:
+            raise KeyError(f'No dataset named {dataset_name} for protein {self.protein.name}')
+
+        dataset = self._datasets[dataset_name]
+        csv = pd.read_csv(os.path.join(self.protein.directory, dataset['path']))
+        smiles_column = dataset.get('smiles_column', self._DEFAULT_SMILES_COLUMN)
+        score_column = dataset.get('score_column', self._DEFAULT_SCORE_COLUMN)
+        stratify = csv[stratify_via_column] if stratify_via_column is not None else None
+        x_train, x_test = sklearn.model_selection.train_test_split(
+            csv,
+            test_size=test_size,
+            random_state=random_state,
+            stratify=stratify
+        )
+
+        actives = x_test.loc[csv['active'] == 1]
+        inactives = x_test.loc[csv['active'] != 1]
+
+        print('Inactives test score mean: {}'.format(inactives[score_column].mean()))
+
+        n_percent = math.ceil(0.1 * x_test.shape[0])
+        print('Inactives test Top 1% descending: {}'.format(
+            inactives.sort_values(score_column, ascending=False)[:n_percent][score_column].mean())
+        )
+        print('Inactives test Top 1% ascending: {}'.format(
+            inactives.sort_values(score_column, ascending=True)[:n_percent][score_column].mean())
+        )
+        print('Inactives test Top 10 descending: {}'.format(
+            inactives.sort_values(score_column, ascending=False)[:10][score_column].mean())
+        )
+        print('Inactives test Top 10 ascending: {}'.format(
+            inactives.sort_values(score_column, ascending=True)[:10][score_column].mean())
+        )
+
+        print('Actives test score mean: {}'.format(actives[score_column].mean()))
+
+        n_percent = math.ceil(0.1 * x_test.shape[0])
+        print('Actives test Top 1% descending: {}'.format(
+            actives.sort_values(score_column, ascending=False)[:n_percent][score_column].mean())
+        )
+        print('Actives test Top 1% ascending: {}'.format(
+            actives.sort_values(score_column, ascending=True)[:n_percent][score_column].mean())
+        )
+        print('Actives test Top 10 descending: {}'.format(
+            actives.sort_values(score_column, ascending=False)[:10][score_column].mean())
+        )
+        print('Actives test Top 10 ascending: {}'.format(
+            actives.sort_values(score_column, ascending=True)[:10][score_column].mean())
+        )
+
+        return x_train[smiles_column].tolist(), x_test[smiles_column].tolist(), x_train[score_column].to_numpy(), x_test[score_column].to_numpy()
 
     def with_linear_combination_score(self, dataset_name, **component_weights):
         """Loads the dataset with score as a linear combination of given components.

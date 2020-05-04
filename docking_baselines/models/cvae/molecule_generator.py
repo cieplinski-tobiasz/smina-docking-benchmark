@@ -267,7 +267,7 @@ class CVAEGradientGenerator:
                             logger.error('Docking failed for %s', smi)
 
                 if descent_results.size > min_valid_steps:
-                    results.append(descent_results)
+                    results.append(descent_results.build())
 
         return results
 

@@ -70,6 +70,11 @@ def smiles_to_hot_filter(smiles, char_indices, max_len, with_valid_indices=False
         if len(smi) > max_len:
             continue
 
+        try:
+            canon_smiles(smi)
+        except Exception:
+            continue
+
         for char in smi:
             try:
                 char_indices[char]

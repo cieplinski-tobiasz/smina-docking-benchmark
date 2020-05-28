@@ -34,7 +34,7 @@ def parse_score_only(smina_stdout: Iterable[str]):
         elif line.startswith('Intramolecular energy:'):
             _, _, energy = line.split()
             results[current_mode]['intramolecular_energy'] = float(energy)
-        elif line.startswith('## *****'):
+        elif line.startswith('##') and not line.startswith('## Name'):
             _, _, *term_values = line.split()
             results[current_mode]['pre_weighting_terms'] = {
                 term: float(value) for term, value in zip(terms, term_values)

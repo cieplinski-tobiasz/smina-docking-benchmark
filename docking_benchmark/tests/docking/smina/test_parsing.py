@@ -60,7 +60,30 @@ import docking_benchmark.docking.smina.parsing as parsing
                         },
                     }
                 ]
-        )
+        ),
+        (
+                [
+                    '## Name gauss(o=0,_w=0.5,_c=8) gauss(o=3,_w=2,_c=8) repulsion(o=0,_c=8) hydrophobic(g=0.5,_b=1.5,_c=8) non_dir_h_bond(g=-0.7,_b=0,_c=8) num_tors_div',
+                    'Affinity: -7.46660 (kcal/mol)',
+                    'Intramolecular energy: 0.13012',
+                    'Term values, before weighting:',
+                    '## CHEMBL364005 53.01924 1000.82690 1.75064 40.33972 1.55378 0.00000',
+                ],
+                [
+                    {
+                        'affinity': -7.46660,
+                        'intramolecular_energy': 0.13012,
+                        'pre_weighting_terms': {
+                            'gauss(o=0__w=0.5__c=8)': 53.01924,
+                            'gauss(o=3__w=2__c=8)': 1000.82690,
+                            'repulsion(o=0__c=8)': 1.75064,
+                            'hydrophobic(g=0.5__b=1.5__c=8)': 40.33972,
+                            'non_dir_h_bond(g=-0.7__b=0__c=8)': 1.55378,
+                            'num_tors_div': 0.00000,
+                        },
+                    },
+                ]
+        ),
     ]
 )
 def test_parse_score_only(stdout, expected):

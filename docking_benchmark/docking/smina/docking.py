@@ -6,6 +6,7 @@ Note: it is recommended to use a larger docking pocket. Otherwise many ligands f
 
 import logging
 import os
+import statistics
 import subprocess
 import tempfile
 from typing import Union, List, Tuple
@@ -16,6 +17,37 @@ import docking_benchmark.docking.smina.parsing
 import docking_benchmark.utils.babel.smiles as convert_smiles
 
 logger = logging.getLogger(__name__)
+
+
+def min_aggregator(scores):
+    return min(scores, key=lambda mode_score: mode_score['docking_score'])
+
+
+def top_n_aggregator(n: int, score_component: str = 'docking_score', reverse: bool = False):
+    if n <= 0:
+        raise ValueError('n should be greater than zero')
+
+    def aggregator(scores):
+        if not scores:
+            return scores
+
+        top_scores = sorted(scores, key=lambda mode_score: mode_score[score_component], reverse=reverse)[:n]
+
+        if not all(score.keys() == top_scores[0].keys() for score in top_scores):
+            raise ValueError('one of the modes does not contain common component')
+
+        aggregated = {}
+        for key in top_scores[0].keys():
+            for mode in top_scores:
+                if key in aggregated:
+                    aggregated[key] += mode[key]
+                else:
+                    aggregated[key] = mode[key]
+
+            aggregated[key] /= len(top_scores)
+        return aggregated
+
+    return aggregator
 
 
 def _exec_subprocess(command: List[str], timeout: int = None) -> List[str]:
@@ -88,7 +120,8 @@ def dock_to_mol2(smiles: str, receptor_path: str, *, output_path, pocket_center:
 
 def dock_smiles(smiles: str, receptor_path, *, output_path=None, pocket_center: Union[List, np.array, Tuple],
                 pocket_range: Union[int, List[int], np.array, Tuple[int]] = 25, exhaustiveness: int = 16,
-                seed: int = 0, timeout: int = 600, n_cpu: int = 8, atom_terms_path=None) -> dict:
+                seed: int = 0, timeout: int = 600, n_cpu: int = 8, atom_terms_path=None,
+                aggregator=min_aggregator) -> dict:
     with tempfile.NamedTemporaryFile(suffix='.mol2') as temp_output_path:
         output_path = output_path if output_path is not None else temp_output_path.name
         dock_to_mol2(
@@ -97,7 +130,7 @@ def dock_smiles(smiles: str, receptor_path, *, output_path=None, pocket_center: 
             exhaustiveness=exhaustiveness, seed=seed, timeout=timeout, n_cpu=n_cpu,
             atom_terms_path=atom_terms_path)
         scores = score_only(output_path, receptor_path, timeout=timeout)
-        return min(scores, key=lambda mode_score: mode_score['docking_score'])
+        return aggregator(scores)
 
 
 def score_only(mol2_path, receptor, timeout: int = 600) -> dict:

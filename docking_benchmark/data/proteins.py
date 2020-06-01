@@ -6,6 +6,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import sklearn
+import sklearn.model_selection
 
 import docking_benchmark.data.directories
 from docking_benchmark.docking.smina.docking import dock_smiles
@@ -97,7 +98,7 @@ class Datasets:
 
         print('Inactives test score mean: {}'.format(inactives[score_column].mean()))
 
-        n_percent = math.ceil(0.1 * x_test.shape[0])
+        n_percent = math.ceil(0.01 * x_test.shape[0])
         print('Inactives test Top 1% descending: {}'.format(
             inactives.sort_values(score_column, ascending=False)[:n_percent][score_column].mean())
         )
@@ -113,7 +114,7 @@ class Datasets:
 
         print('Actives test score mean: {}'.format(actives[score_column].mean()))
 
-        n_percent = math.ceil(0.1 * x_test.shape[0])
+        n_percent = math.ceil(0.01 * x_test.shape[0])
         print('Actives test Top 1% descending: {}'.format(
             actives.sort_values(score_column, ascending=False)[:n_percent][score_column].mean())
         )

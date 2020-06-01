@@ -58,7 +58,7 @@ if __name__ == '__main__':
             scores = protein.dock_smiles_to_protein(
                 smiles,
                 output_path=os.path.join(directory, f'{i}.mol2'),
-                atom_terms_path=os.path.join(directory, f'{i}.ita')
+                atom_terms_path=os.path.join(directory, f'{i}.ita'),
             )
             scores['mol_number'] = i
             df = pd.DataFrame.from_dict(scores, orient='index').T

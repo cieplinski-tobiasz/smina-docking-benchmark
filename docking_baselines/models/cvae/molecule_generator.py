@@ -2,13 +2,22 @@ import logging
 import os.path
 
 import numpy as np
-from sklearn.model_selection import train_test_split
+from rdkit.Chem import MolFromSmiles
+from rdkit.Chem.Crippen import MolLogP
+from rdkit.Chem.Descriptors import ExactMolWt
+from rdkit.Chem.Lipinski import NumHAcceptors, NumHDonors
 
 import docking_baselines.models.cvae.mol_utils as mol_utils
 import docking_baselines.models.cvae.vae_utils as vae_utils
 from docking_baselines.models.predicted_docking_functions import MLPPredictedDockingScore
 from docking_benchmark.data.results import OptimizedMolecules
 from docking_benchmark.utils.chemistry import is_valid, canonicalize
+
+
+def lipinski_filter(smiles):
+    mol = MolFromSmiles(smiles)
+    return MolLogP(mol) <= 5 and NumHAcceptors(mol) <= 10 and NumHDonors(mol) <= 5 and 100 <= ExactMolWt(mol) <= 500
+
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +150,7 @@ class CVAEGradientGenerator:
                       self.cvae.hot_to_smiles(self.cvae.decode(latents), strip=True, numpy=True)]
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi):
+                if smi is not None and is_valid(smi) and lipinski_filter(smi):
                     try:
                         if smi not in results_builder:
                             output_path = os.path.join(
@@ -191,7 +200,7 @@ class CVAEGradientGenerator:
                 continue
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi):
+                if smi is not None and is_valid(smi) and lipinski_filter(smi):
                     try:
                         if smi not in results_builder:
                             latent_score = self.mlp.latent_score(latents[i].reshape(1, -1))

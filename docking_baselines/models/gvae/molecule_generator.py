@@ -3,6 +3,10 @@ import os.path
 import tempfile
 
 import numpy as np
+from rdkit.Chem import MolFromSmiles
+from rdkit.Chem.Crippen import MolLogP
+from rdkit.Chem.Descriptors import ExactMolWt
+from rdkit.Chem.Lipinski import NumHAcceptors, NumHDonors
 
 import docking_baselines.models.gvae.zinc_grammar as zinc_grammar
 from docking_baselines.models.gvae.model_zinc import MoleculeVAE
@@ -10,6 +14,12 @@ from docking_baselines.models.gvae.molecule_vae import ZincGrammarModel
 from docking_baselines.models.predicted_docking_functions import MLPPredictedDockingScore
 from docking_benchmark.data.results import OptimizedMolecules
 from docking_benchmark.utils.chemistry import is_valid, canonicalize
+
+
+def lipinski_filter(smiles):
+    mol = MolFromSmiles(smiles)
+    return MolLogP(mol) <= 5 and NumHAcceptors(mol) <= 10 and NumHDonors(mol) <= 5 and 100 <= ExactMolWt(mol) <= 500
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +108,7 @@ class GVAEGradientGenerator:
             smiles = [canonicalize(smi) for smi in self.gvae.decode(latents)]
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi):
+                if smi is not None and is_valid(smi) and lipinski_filter(smi):
                     try:
                         if smi not in results_builder:
                             output_path = os.path.join(
@@ -193,7 +203,7 @@ class GVAEGradientGenerator:
                 continue
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi):
+                if smi is not None and is_valid(smi) and lipinski_filter(smi):
                     try:
                         if smi not in results_builder:
                             latent_score = self.mlp.latent_score(latents[i].reshape(1, -1))

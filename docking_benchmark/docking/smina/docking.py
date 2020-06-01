@@ -121,7 +121,7 @@ def dock_to_mol2(smiles: str, receptor_path: str, *, output_path, pocket_center:
 def dock_smiles(smiles: str, receptor_path, *, output_path=None, pocket_center: Union[List, np.array, Tuple],
                 pocket_range: Union[int, List[int], np.array, Tuple[int]] = 25, exhaustiveness: int = 16,
                 seed: int = 0, timeout: int = 600, n_cpu: int = 8, atom_terms_path=None,
-                aggregator=min_aggregator) -> dict:
+                aggregator=top_n_aggregator(5)) -> dict:
     with tempfile.NamedTemporaryFile(suffix='.mol2') as temp_output_path:
         output_path = output_path if output_path is not None else temp_output_path.name
         dock_to_mol2(

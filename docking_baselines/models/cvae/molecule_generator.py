@@ -272,7 +272,7 @@ class CVAEGradientGenerator:
                                 step=j,
                                 **docking_score
                             )
-                        except (ValueError, RuntimeError):
+                        except (ValueError, RuntimeError, TypeError):
                             logger.error('Docking failed for %s', smi)
 
                 if descent_results.size > min_valid_steps:

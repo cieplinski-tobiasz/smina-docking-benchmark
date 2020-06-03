@@ -221,7 +221,7 @@ class GVAEGradientGenerator:
                             )
                         else:
                             logger.info('Generated SMILES %s already present in OptimizedMoleculesBuilder', smi)
-                    except (RuntimeError, ValueError):
+                    except (RuntimeError, ValueError, TypeError):
                         logger.error('Docking failed for ' + smi)
 
                     if results_builder.size >= number_molecules:

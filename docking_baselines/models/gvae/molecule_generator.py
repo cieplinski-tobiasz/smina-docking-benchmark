@@ -108,8 +108,8 @@ class GVAEGradientGenerator:
             smiles = [canonicalize(smi) for smi in self.gvae.decode(latents)]
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi) and lipinski_filter(smi):
-                    try:
+                try:
+                    if smi is not None and is_valid(smi) and lipinski_filter(smi):
                         if smi not in results_builder:
                             output_path = os.path.join(
                                 self.output_dir,
@@ -124,12 +124,12 @@ class GVAEGradientGenerator:
                             )
                         else:
                             logger.info('Generated SMILES %s already present in OptimizedMoleculesBuilder', smi)
-                    except (ValueError, RuntimeError):
-                        logger.error('Docking failed')
+                except (ValueError, RuntimeError):
+                    logger.error('Docking failed')
 
-                    if results_builder.size >= size:
-                        logger.info('Random sampling finished')
-                        break
+                if results_builder.size >= size:
+                    logger.info('Random sampling finished')
+                    break
 
         return results_builder.build()
 
@@ -198,13 +198,13 @@ class GVAEGradientGenerator:
 
             try:
                 smiles = [canonicalize(smi) for smi in self.gvae.decode(latents)]
-            except (RuntimeError, ValueError):
+            except Exception:
                 logger.error('Decoding failed')
                 continue
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi) and lipinski_filter(smi):
-                    try:
+                try:
+                    if smi is not None and is_valid(smi) and lipinski_filter(smi):
                         if smi not in results_builder:
                             latent_score = self.mlp.latent_score(latents[i].reshape(1, -1))
                             logger.info(f'Optimized from {before[i]} to {latent_score}')
@@ -221,12 +221,12 @@ class GVAEGradientGenerator:
                             )
                         else:
                             logger.info('Generated SMILES %s already present in OptimizedMoleculesBuilder', smi)
-                    except (RuntimeError, ValueError, TypeError):
-                        logger.error('Docking failed for ' + smi)
+                except Exception:
+                    logger.error('Docking failed for ' + smi)
 
-                    if results_builder.size >= number_molecules:
-                        logger.info(f'Generating finished')
-                    break
+                if results_builder.size >= number_molecules:
+                    logger.info(f'Generating finished')
+                break
 
             results_builder.total_samples += self.batch_size
         return results_builder.build()

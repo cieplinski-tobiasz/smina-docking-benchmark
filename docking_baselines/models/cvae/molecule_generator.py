@@ -150,8 +150,8 @@ class CVAEGradientGenerator:
                       self.cvae.hot_to_smiles(self.cvae.decode(latents), strip=True, numpy=True)]
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi) and lipinski_filter(smi):
-                    try:
+                try:
+                    if smi is not None and is_valid(smi) and lipinski_filter(smi):
                         if smi not in results_builder:
                             output_path = os.path.join(
                                 self.output_dir,
@@ -166,12 +166,12 @@ class CVAEGradientGenerator:
                             )
                         else:
                             logger.info('Generated SMILES %s already present in OptimizedMoleculesBuilder', smi)
-                    except (ValueError, RuntimeError):
-                        logger.error('Docking failed for ' + smi)
+                except Exception:
+                    logger.error('Docking failed for ' + smi)
 
-                    if results_builder.size >= size:
-                        logger.info('Random sampling finished')
-                        break
+                if results_builder.size >= size:
+                    logger.info('Random sampling finished')
+                    break
 
             results_builder.total_samples += self.batch_size
 
@@ -200,8 +200,8 @@ class CVAEGradientGenerator:
                 continue
 
             for i, smi in enumerate(smiles):
-                if smi is not None and is_valid(smi) and lipinski_filter(smi):
-                    try:
+                try:
+                    if smi is not None and is_valid(smi) and lipinski_filter(smi):
                         if smi not in results_builder:
                             latent_score = self.mlp.latent_score(latents[i].reshape(1, -1))
                             logger.info(f'Optimized from {before[i]} to {latent_score}')
@@ -218,12 +218,12 @@ class CVAEGradientGenerator:
                             )
                         else:
                             logger.info('Generated SMILES %s already present in OptimizedMoleculesBuilder', smi)
-                    except (RuntimeError, ValueError):
-                        logger.error('Docking failed for ' + smi)
+                except Exception:
+                    logger.error('Docking failed for ' + smi)
 
-                    if results_builder.size >= number_molecules:
-                        logger.info('Generating finished')
-                        break
+                if results_builder.size >= number_molecules:
+                    logger.info('Generating finished')
+                    break
 
             results_builder.total_samples += self.batch_size
 

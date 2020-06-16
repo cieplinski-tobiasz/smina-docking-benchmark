@@ -1,5 +1,4 @@
 import json
-import math
 import os
 from typing import List
 
@@ -91,41 +90,6 @@ class Datasets:
             test_size=test_size,
             random_state=random_state,
             stratify=stratify
-        )
-
-        actives = x_test.loc[csv['active'] == 1]
-        inactives = x_test.loc[csv['active'] != 1]
-
-        print('Inactives test score mean: {}'.format(inactives[score_column].mean()))
-
-        n_percent = math.ceil(0.01 * x_test.shape[0])
-        print('Inactives test Top 1% descending: {}'.format(
-            inactives.sort_values(score_column, ascending=False)[:n_percent][score_column].mean())
-        )
-        print('Inactives test Top 1% ascending: {}'.format(
-            inactives.sort_values(score_column, ascending=True)[:n_percent][score_column].mean())
-        )
-        print('Inactives test Top 10 descending: {}'.format(
-            inactives.sort_values(score_column, ascending=False)[:10][score_column].mean())
-        )
-        print('Inactives test Top 10 ascending: {}'.format(
-            inactives.sort_values(score_column, ascending=True)[:10][score_column].mean())
-        )
-
-        print('Actives test score mean: {}'.format(actives[score_column].mean()))
-
-        n_percent = math.ceil(0.01 * x_test.shape[0])
-        print('Actives test Top 1% descending: {}'.format(
-            actives.sort_values(score_column, ascending=False)[:n_percent][score_column].mean())
-        )
-        print('Actives test Top 1% ascending: {}'.format(
-            actives.sort_values(score_column, ascending=True)[:n_percent][score_column].mean())
-        )
-        print('Actives test Top 10 descending: {}'.format(
-            actives.sort_values(score_column, ascending=False)[:10][score_column].mean())
-        )
-        print('Actives test Top 10 ascending: {}'.format(
-            actives.sort_values(score_column, ascending=True)[:10][score_column].mean())
         )
 
         return x_train[smiles_column].tolist(), x_test[smiles_column].tolist(), x_train[score_column].to_numpy(), x_test[score_column].to_numpy()

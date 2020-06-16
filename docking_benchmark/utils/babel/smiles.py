@@ -1,3 +1,8 @@
+"""
+Some functions adapted from guacamol library
+https://github.com/benevolentAI/guacamol
+"""
+
 import subprocess
 from typing import Optional
 

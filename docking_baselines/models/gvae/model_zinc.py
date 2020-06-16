@@ -1,3 +1,8 @@
+"""
+Adapted from GVAE original repository
+https://github.com/mkusner/grammarVAE
+"""
+
 import tensorflow as tf
 from keras import backend as K
 from keras import objectives

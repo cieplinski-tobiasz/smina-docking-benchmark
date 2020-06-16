@@ -1,3 +1,8 @@
+"""
+Adapted from CVAE original repository
+https://github.com/aspuru-guzik-group/chemical_vae
+"""
+
 from keras import backend as K
 from keras.layers import Input, Lambda
 from keras.layers.convolutional import Convolution1D

@@ -1,4 +1,7 @@
 """
+Adapted from CVAE original repository
+https://github.com/aspuru-guzik-group/chemical_vae
+
 sampled_rnn - based on rnn method in tensorflow_backend.py in keras
 
 Main difference is in how to handle dimensions of states.

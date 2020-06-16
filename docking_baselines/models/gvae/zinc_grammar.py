@@ -1,3 +1,8 @@
+"""
+Adapted from GVAE original repository
+https://github.com/mkusner/grammarVAE
+"""
+
 import nltk
 import numpy as np
 

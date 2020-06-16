@@ -1,3 +1,8 @@
+"""
+Adapted from CVAE original repository
+https://github.com/aspuru-guzik-group/chemical_vae
+"""
+
 import numpy as np
 from rdkit.Chem import AllChem as Chem
 

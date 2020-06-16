@@ -1,3 +1,8 @@
+"""
+Adapted from CVAE original repository
+https://github.com/aspuru-guzik-group/chemical_vae
+"""
+
 import json
 from collections import OrderedDict
 from copy import deepcopy

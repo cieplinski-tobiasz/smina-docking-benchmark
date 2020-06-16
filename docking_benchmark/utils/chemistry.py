@@ -1,3 +1,8 @@
+"""
+Some functions adapted from guacamol library
+https://github.com/benevolentAI/guacamol
+"""
+
 from typing import Optional
 
 import numpy as np

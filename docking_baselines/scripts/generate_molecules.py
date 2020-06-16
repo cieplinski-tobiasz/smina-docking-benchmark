@@ -59,13 +59,13 @@ def generate_and_dock_molecules(*, model, model_path, output_dir, protein, n_mol
     generator = model_cls(model_path, dataset, mode=mode, fine_tune_epochs=fine_tune_epochs, output_dir=output_dir,
                           docking_n_cpu=n_cpu)
 
-    generator._fine_tune()
-    generator._train_mlp()
+    generator.fine_tune()
+    generator.train_mlp()
     gauss = generator.random_gauss(protein.dock_smiles_to_protein, random_samples)
     gauss.save(os.path.join(output_dir, 'gauss.om'))
-    optimized = generator._generate_optimized_molecules(n_molecules, protein.dock_smiles_to_protein)
+    optimized = generator.generate_optimized_molecules(n_molecules, protein.dock_smiles_to_protein)
     optimized.save(os.path.join(output_dir, 'generated.om'))
-    descent = generator._descent_steps(protein.dock_smiles_to_protein, 50)
+    descent = generator.descent_steps(protein.dock_smiles_to_protein, 50)
 
     for i, d in enumerate(descent):
         d.save(os.path.join(output_dir, f'descent_{i}.om'))

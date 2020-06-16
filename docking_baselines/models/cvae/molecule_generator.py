@@ -78,7 +78,7 @@ class CVAEGradientGenerator:
 
         return smiles_to_latent
 
-    def _fine_tune(self):
+    def fine_tune(self):
         if self.fine_tune_epochs <= 0 or self.fine_tuned:
             return
 
@@ -126,7 +126,7 @@ class CVAEGradientGenerator:
             validation_data=[test, model_test_targets]
         )
 
-    def _train_mlp(self):
+    def train_mlp(self):
         if self.mlp is None:
             self.mlp = MLPPredictedDockingScore(
                 self.train_dataset, input_dim=self.latent,
@@ -179,7 +179,7 @@ class CVAEGradientGenerator:
 
         return results_builder.build()
 
-    def _generate_optimized_molecules(self, number_molecules, smiles_docking_score_fn):
+    def generate_optimized_molecules(self, number_molecules, smiles_docking_score_fn):
         results_builder = OptimizedMolecules.Builder()
 
         while results_builder.size < number_molecules:
@@ -229,7 +229,7 @@ class CVAEGradientGenerator:
 
         return results_builder.build()
 
-    def _descent_steps(self, smiles_docking_score_fn, size):
+    def descent_steps(self, smiles_docking_score_fn, size):
         assert smiles_docking_score_fn is not None
         assert size is not None
         logger.info('Descent steps start')
@@ -277,28 +277,5 @@ class CVAEGradientGenerator:
 
                 if descent_results.size > min_valid_steps:
                     results.append(descent_results.build())
-
-        return results
-
-    def generate_optimized_molecules(self,
-                                     number_molecules: int,
-                                     with_random_samples: bool = False,
-                                     smiles_docking_score_fn=None,
-                                     random_samples: int = 100):
-        self._fine_tune()
-        self._train_mlp()
-
-        gauss_samples = self.random_gauss(smiles_docking_score_fn, random_samples) if with_random_samples else None
-        descent_samples = self._descent_steps(smiles_docking_score_fn, 100) \
-            if smiles_docking_score_fn is not None else None
-        optimized_molecules = self._generate_optimized_molecules(number_molecules, smiles_docking_score_fn)
-
-        results = {'optimized': optimized_molecules}
-
-        if gauss_samples is not None:
-            results['gauss'] = gauss_samples
-
-        if descent_samples is not None:
-            results['descent'] = descent_samples
 
         return results

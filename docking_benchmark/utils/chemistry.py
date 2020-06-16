@@ -41,7 +41,8 @@ def embed_rdkit_molecule(molecule: Chem.Mol, seed: int, silent: bool = True) -> 
         conf_id = AllChem.EmbedMolecule(molecule, useRandomCoords=True, ignoreSmoothingFailures=True, randomSeed=seed)
 
         if conf_id == -1:
-            conf_id = AllChem.EmbedMolecule(molecule, useRandomCoords=False, ignoreSmoothingFailures=True, randomSeed=seed)
+            conf_id = AllChem.EmbedMolecule(molecule, useRandomCoords=False, ignoreSmoothingFailures=True,
+                                            randomSeed=seed)
 
         if conf_id == -1:
             raise ValueError('Embedding failure')

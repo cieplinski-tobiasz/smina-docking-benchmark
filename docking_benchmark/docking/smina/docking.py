@@ -6,7 +6,6 @@ Note: it is recommended to use a larger docking pocket. Otherwise many ligands f
 
 import logging
 import os
-import statistics
 import subprocess
 import tempfile
 from typing import Union, List, Tuple

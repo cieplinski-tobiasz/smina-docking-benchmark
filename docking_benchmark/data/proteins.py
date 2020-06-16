@@ -92,7 +92,8 @@ class Datasets:
             stratify=stratify
         )
 
-        return x_train[smiles_column].tolist(), x_test[smiles_column].tolist(), x_train[score_column].to_numpy(), x_test[score_column].to_numpy()
+        return x_train[smiles_column].tolist(), x_test[smiles_column].tolist(), \
+               x_train[score_column].to_numpy(), x_test[score_column].to_numpy()
 
     def with_linear_combination_score(self, dataset_name, **component_weights):
         """Loads the dataset with score as a linear combination of given components.

@@ -1,4 +1,6 @@
-# smina-docking-benchmark
+# We Should at Least Be Able to Design Molecules That Dock Well
+
+To learn how to evaluate your model, [see Getting Started notebook](notebooks/getting-started.ipynb).
 
 ## Environment
 

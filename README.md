@@ -1,6 +1,8 @@
 # We Should at Least Be Able to Design Molecules That Dock Well
 
-To learn how to evaluate your model, [see Getting Started notebook](notebooks/getting-started.ipynb).
+![Docking Benchmark Flow](images/docking_benchmark_flow.png?raw=true)
+
+**To learn how to evaluate your model, [see Getting Started notebook](notebooks/getting-started.ipynb).**
 
 ## Environment
 

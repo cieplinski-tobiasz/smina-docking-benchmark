@@ -127,6 +127,12 @@ def canonicalize(smiles: str, include_stereocenters=True) -> Optional[str]:
         return None
 
 
+def calculate_similarity(smiles1, smiles2):
+    fp1 = get_fingerprints(get_mols([smiles1]))
+    fp2 = get_fingerprints(get_mols([smiles2]))
+    return DataStructs.TanimotoSimilarity(fp1[0], fp2[0])
+
+
 def calculate_pairwise_similarities(smiles_list1, smiles_list2) -> np.array:
     """
     Computes the pairwise ECFP4 tanimoto similarity of the two smiles containers.

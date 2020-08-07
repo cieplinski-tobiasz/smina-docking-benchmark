@@ -82,12 +82,16 @@ class OptimizedMolecules:
 
     def save(self, path):
         with open(path, 'wb') as file:
-            pickle.dump(self, file)
+            pickle.dump({
+                'molecules': self.molecules,
+                'metrics': self.metrics,
+            }, file)
 
     @staticmethod
     def load(path):
         with open(path, 'rb') as file:
-            return pickle.load(file)
+            dump = pickle.load(file)
+            return OptimizedMolecules(dump['molecules'], **dump['metrics'])
 
     def to_csv(self, path, index_label='SMILES', without_columns=None, **pd_kwargs):
         if without_columns is not None and 'columns' in pd_kwargs:

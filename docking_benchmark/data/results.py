@@ -1,13 +1,12 @@
-import itertools
 import math
 import pickle
-import statistics
 from typing import List
 
 import numpy as np
 import pandas as pd
+import scipy.special
 
-from docking_benchmark.utils.chemistry import calculate_pairwise_similarities, calculate_similarity
+from docking_benchmark.utils.chemistry import calculate_pairwise_similarities, calculate_internal_pairwise_diversities
 
 
 class OptimizedMolecules:
@@ -58,9 +57,10 @@ class OptimizedMolecules:
             return 0
 
         if self._internal_similarity_cache is None:
-            self._internal_similarity_cache = 1 - statistics.mean(
-                calculate_similarity(smi1, smi2)
-                for smi1, smi2 in itertools.combinations(self.molecules.index.tolist(), 2))
+            diversities = np.triu(
+                calculate_internal_pairwise_diversities(self.molecules.index.tolist()),
+                1)
+            self._internal_similarity_cache = np.sum(diversities) / scipy.special.binom(self._len, 2)
 
         return self._internal_similarity_cache
 

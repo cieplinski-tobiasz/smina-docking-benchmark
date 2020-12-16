@@ -4,6 +4,8 @@
 
 **To learn how to evaluate your model, [see Getting Started notebook](notebooks/getting-started.ipynb).**
 
+Note: We should release in January v2 of the benchmark that adds better baselines and accounts for diversity.
+
 ## Results
 
 Listed below are benchmark results from the paper for docking score optimization (the lower, the better). Each cell reports the mean score for all compounds, and for the top 1% of compounds in the parenthesis. ZiNC row contains 250 random molecules from fine-tuning dataset.

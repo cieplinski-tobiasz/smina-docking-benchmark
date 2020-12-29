@@ -4,20 +4,20 @@
 
 **To learn how to evaluate your model, [see Getting Started notebook](notebooks/getting-started.ipynb).**
 
-Note: We should release in January v2 of the benchmark that adds better baselines and accounts for diversity.
+Paper: https://arxiv.org/abs/2006.16955.
+News: 
+  * (12.2020) We have released v1.0 of the benchmark. We have added REINVENT, diversity and novelty criterions, and better baselines.
 
 ## Results
 
-Listed below are benchmark results from the paper for docking score optimization (the lower, the better). Each cell reports the mean score for all compounds, and for the top 1% of compounds in the parenthesis. ZiNC row contains 250 random molecules from fine-tuning dataset.
+Listed below are benchmark results from the paper for docking score optimization (the lower, the better). Each cell reports the mean score for the generated compounds. For ZINC, we sampled 1000 compounds and report the top 10% docking score. Please see paper for more details.
 
 |               | 5HT1B             | 5HT2B            | ACM2             | CYP2D6           |
 |---------------|-------------------|------------------|------------------|------------------|
-| **ZiNC**      | -8.241 (-12.068)  | -8.303 (-14.477) | -7.587 (-11.533) | -6.873 (-10.601) |
-| **Inactives** | -7.707 (-11.306)  | -8.375 (-11.212) | -6.971 (-10.451) | -6.992 (-10.76)  |
-| **Actives**   | -8.727 (-12.294)  | -8.527 (-14.38)  | -8.156 (-11.532) | -6.866 (-8.869)  |
-| **CVAE**      | -4.888 (-8.942)   | -5.349 (-9.767)  | -5.138 (-7.600)  | -4.829 (-7.719)  |
-| **GVAE**      | -4.681 (-7.507)   | -4.139 (-6.983)  | -5.156 (-7.869)  | -5.425 (-7.590)  |
-| **REINVENT**  | -10.412 (-11.480) | -9.084 (-11.65)  | -6.798 (-9.285)  | -9.145 (-11.463) |
+| **CVAE**      | -4.647 | -4.188  | ) -4.836  | -  |
+| **GVAE**      | -4.955   | -4.641  | -5.422  | -7.672  |
+| **REINVENT**  | -9.774  | -8.657  | -9.775   | -8.759 |
+| **ZINC (top 10%)** | -9.894   | -9.228 | -8.282 | -8.787 |
 
 ## Environment
 

@@ -4,14 +4,17 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import scipy.special
 
-from docking_benchmark.utils.chemistry import calculate_pairwise_similarities
+from docking_benchmark.utils.chemistry import calculate_pairwise_similarities, calculate_internal_pairwise_diversities
 
 
 class OptimizedMolecules:
     def __init__(self, molecules: pd.DataFrame, **precalculated_metrics):
         self.molecules = molecules
         self.metrics = precalculated_metrics
+        self._len = self.molecules.shape[0]
+        self._internal_similarity_cache = None
 
     def rmse(self, col1: str, col2: str):
         if col1 not in self.molecules.columns:
@@ -45,9 +48,21 @@ class OptimizedMolecules:
         if fraction <= 0 or fraction > 1:
             raise ValueError('fraction must be in range (0, 1]')
 
-        n = math.ceil(fraction * self.molecules.shape[0])
+        n = math.ceil(fraction * self._len)
 
         return self.molecules.sort_values(by_column, ascending=sort_ascending)[:n]
+
+    def internal_diversity(self):
+        if self._len == 1:
+            return 0
+
+        if self._internal_similarity_cache is None:
+            diversities = np.triu(
+                calculate_internal_pairwise_diversities(self.molecules.index.tolist()),
+                1)
+            self._internal_similarity_cache = np.sum(diversities) / scipy.special.binom(self._len, 2)
+
+        return self._internal_similarity_cache
 
     def most_similar_tanimoto(self, to_smiles: List[str]):
         tanimoto_similarities = calculate_pairwise_similarities(
@@ -57,23 +72,26 @@ class OptimizedMolecules:
 
         most_similar_indices = np.argmax(tanimoto_similarities, axis=1)
         max_tanimoto_similarities = np.array(
-            [tanimoto_similarities[i, most_similar_indices[i]] for i in range(self.molecules.shape[0])])
+            [tanimoto_similarities[i, most_similar_indices[i]] for i in range(self._len)])
 
         most_similars = pd.DataFrame(index=self.molecules.index.copy())
         most_similars['tanimoto_similarity'] = max_tanimoto_similarities
-        most_similars['most_similar_smiles'] = [to_smiles[most_similar_indices[i]] for i in
-                                                range(self.molecules.shape[0])]
+        most_similars['most_similar_smiles'] = [to_smiles[most_similar_indices[i]] for i in range(self._len)]
 
         return most_similars
 
     def save(self, path):
         with open(path, 'wb') as file:
-            pickle.dump(self, file)
+            pickle.dump({
+                'molecules': self.molecules,
+                'metrics': self.metrics,
+            }, file)
 
     @staticmethod
     def load(path):
         with open(path, 'rb') as file:
-            return pickle.load(file)
+            dump = pickle.load(file)
+            return OptimizedMolecules(dump['molecules'], **dump['metrics'])
 
     def to_csv(self, path, index_label='SMILES', without_columns=None, **pd_kwargs):
         if without_columns is not None and 'columns' in pd_kwargs:
@@ -120,6 +138,9 @@ class OptimizedMolecules:
             return metrics
 
         def build(self):
+            if self.size < 1:
+                raise ValueError('Nothing to build - builder is empty')
+
             return OptimizedMolecules(
                 pd.DataFrame.from_dict(self._molecule_attributes, orient='index'),
                 **self._precalculate_metrics()

@@ -200,7 +200,9 @@ def test_to_csv_with_without_columns(tmp_path):
 
 
 def test_to_csv_call_with_without_columns_and_columns_raises(tmp_path):
-    uut = OptimizedMolecules.Builder().build()
+    builder = OptimizedMolecules.Builder()
+    builder.append('C', col1=0, col2=1)
+    uut = builder.build()
 
     with pytest.raises(ValueError):
         uut.to_csv('dummy_path', columns=[], without_columns=[])

@@ -58,6 +58,24 @@ class Datasets:
         score_column = dataset.get('score_column', self._DEFAULT_SCORE_COLUMN)
         return csv[smiles_column].tolist(), csv[score_column].to_numpy()
 
+    def get_raw_dataset(self, dataset_name: str):
+        """Loads the dataset with given name to memory.
+
+        Args:
+            dataset_name (str): Name of the dataset to load.
+
+        Returns:
+            tuple[list[str], np.array]: SMILES and score tuple.
+
+        Raises:
+            KeyError: If dataset with given name does not exist.
+        """
+        if dataset_name not in self._datasets:
+            raise KeyError(f'No dataset named {dataset_name} for protein {self.protein.name}')
+
+        dataset = self._datasets[dataset_name]
+        return pd.read_csv(os.path.join(self.protein.directory, dataset['path']))
+
     def with_train_test_split(self, dataset_name: str, *,
                               test_size: float,
                               random_state: int = 0,

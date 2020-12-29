@@ -61,6 +61,7 @@ if __name__ == '__main__':
                 atom_terms_path=os.path.join(directory, f'{i}.ita'),
             )
             scores['mol_number'] = i
+            scores['SMILES'] = smiles
             df = pd.DataFrame.from_dict(scores, orient='index').T
 
             if not os.path.isfile(output_csv):

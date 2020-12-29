@@ -68,7 +68,8 @@ def _exec_subprocess(command: List[str], timeout: int = None) -> List[str]:
 
 def dock_to_mol2(smiles: str, receptor_path: str, *, output_path, pocket_center: Union[List, np.array, Tuple],
                  pocket_range: Union[int, List[int], np.array, Tuple[int]] = 25, exhaustiveness: int = 16,
-                 seed: int = 0, timeout: int = 600, n_cpu: int = 8, atom_terms_path=None) -> float:
+                 seed: int = 0, timeout: int = 600, n_cpu: int = 8, atom_terms_path=None,
+                 scoring='vinardo') -> float:
     """
     Docks the passed molecule and saves the docked ligand in .mol2 file.
 
@@ -83,6 +84,7 @@ def dock_to_mol2(smiles: str, receptor_path: str, *, output_path, pocket_center:
         n_cpu: Number of threads used by SMINA.
         output_path: Path the docked ligand will be saved to.
         atom_terms_path: Path the atom interactions will be saved to.
+        scoring: Name of builtin SMINA scoring function.
 
     Returns:
         output_path
@@ -107,6 +109,7 @@ def dock_to_mol2(smiles: str, receptor_path: str, *, output_path, pocket_center:
             '--size_z', pocket_range[2],
             '--exhaustiveness', exhaustiveness,
             '--out', os.path.abspath(output_path),
+            '--scoring', scoring,
         ]
 
         if atom_terms_path is not None:
@@ -132,13 +135,14 @@ def dock_smiles(smiles: str, receptor_path, *, output_path=None, pocket_center: 
         return aggregator(scores)
 
 
-def score_only(mol2_path, receptor, timeout: int = 600) -> dict:
+def score_only(mol2_path, receptor, timeout: int = 600, scoring='vinardo') -> dict:
     """Evaluates the docked molecule.
 
     Args:
         mol2_path: Path to docked molecule in .mol2 format.
         receptor: Path to receptor in .pdbqt format.
         timeout: Maximum scoring time in seconds.
+        scoring: Name of builtin SMINA scoring function.
 
     Returns:
         dict: Dictionary of dictionaries containing score values for given mode.
@@ -146,11 +150,10 @@ def score_only(mol2_path, receptor, timeout: int = 600) -> dict:
     """
     cmd = [
         'smina',
-        '-l',
-        os.path.abspath(mol2_path),
+        '--scoring', scoring,
+        '-l', os.path.abspath(mol2_path),
         '--score_only',
-        '-r',
-        os.path.abspath(receptor)
+        '-r', os.path.abspath(receptor),
     ]
 
     stdout = _exec_subprocess(cmd, timeout=timeout)

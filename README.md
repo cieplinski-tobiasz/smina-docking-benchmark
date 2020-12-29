@@ -7,7 +7,7 @@
 Paper: https://arxiv.org/abs/2006.16955.
 
 News: 
-  * (12.2020) We have released v1.0 of the benchmark. We have changed scoring function to Vinardo based on feedback we received. We also added novelty filter to ensure that generated compounds are not too similar to the training set. We report diversity on top of score achieved in each benchmark. Finally, we added REINVENT.
+  * (12.2020) We have released v1.0 of the benchmark. Main changes include changing the scoring function to a more accurate one (Vinardo), adding stronger baselines (REINVENT and sampling molecules from ZINC), and measuring and ensuring sufficient novelty and diversity of generated molecules.
 
 ## Results
 

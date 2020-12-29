@@ -11,14 +11,15 @@ News:
 
 ## Results
 
-Listed below are benchmark results from the paper for docking score optimization (the lower, the better). Each cell reports the mean score for the generated compounds. For ZINC, we sampled 1000 compounds and report the top 10% docking score. Please see paper for more details.
+Listed below are benchmark results from the paper for docking score optimization (the lower, the better). Each cell reports the mean score for the generated compounds and their internal diversity in parenthesis. For each protein we sampled a set of molecules from ZINC subset of protein's training set size. As a baseline we report results for top 10% molecules from training set and ZINC. Please see paper for more details.
 
-|               | 5HT1B             | 5HT2B            | ACM2             | CYP2D6           |
-|---------------|-------------------|------------------|------------------|------------------|
-| **CVAE**      | -4.647 | -4.188  |  -4.836  | -  |
-| **GVAE**      | -4.955   | -4.641  | -5.422  | -7.672  |
-| **REINVENT**  | -9.774  | -8.657  | -9.775   | -8.759 |
-| **ZINC (top 10%)** | -9.894   | -9.228 | -8.282 | -8.787 |
+|                 | 5HT1B           | 5HT2B          | ACM2           | CYP2D6         |
+|-----------------|-----------------|----------------|----------------|----------------|
+| **CVAE**        | -4.647 (0.907)  | -4.188 (0.913) | -4.836 (0.905) | -              |
+| **GVAE**        | -4.955 (0.901)  | -4.641 (0.887) | -5.422 (0.898) | -7.672 (0.714) |
+| **REINVENT**    | -9.774 (0.506)  | -8.657 (0.455) | -9.775 (0.467) | -8.759 (0.626) |
+| **Train (10%)** | -10.837 (0.749) | -9.769 (0.831) | -8.976 (0.812) | -9.256 (0.869) |
+| **ZINC (10%)**  | -9.894 (0.862)  | -9.228 (0.851) | -8.282 (0.860) | -8.787 (0.853) |
 
 ## Environment
 

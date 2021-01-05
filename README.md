@@ -11,7 +11,7 @@ News:
 
 ## Results
 
-Listed below are benchmark results from the paper for docking score optimization (the lower, the better). Each cell reports the mean score for the generated compounds and their internal diversity in parenthesis. For each protein we sampled a set of molecules from ZINC subset of protein's training set size. As a baseline, we also report results for the top 10% molecules from training set and ZINC. Please see paper for more details.
+Listed below are benchmark results from the paper for docking score optimization (the lower, the better). Each cell reports the mean score for the generated compounds and their internal diversity in parenthesis. For each protein we sampled a set of molecules from ZINC subset of protein's training set size. As a baseline, we also report results for the top 10% molecules from the training set and ZINC. Please see our paper for more details.
 
 |                 | 5HT1B           | 5HT2B          | ACM2           | CYP2D6         |
 |-----------------|-----------------|----------------|----------------|----------------|
